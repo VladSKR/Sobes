@@ -113,39 +113,33 @@ java -XX:+PrintFlagsFinal -version
 
 ---
 
-## Аннотации — Retention Policy
 
-```java
-@Retention(RetentionPolicy.SOURCE)   // удаляется компилятором (@Override)
-@Retention(RetentionPolicy.CLASS)    // в байткоде, недоступна через рефлексию (default)
-@Retention(RetentionPolicy.RUNTIME)  // доступна через рефлексию (@Transactional, @Autowired)
-```
+
+
+
 
 ---
 
-## Ingress (Ингресс)
+## Стек и Куча
 
-В контексте Kubernetes — **Ingress** это объект, управляющий внешним HTTP/HTTPS доступом к сервисам кластера.
+### Stack (Стек)
+- Локальные переменные и примитивы
+- Ссылки на объекты (сами объекты — в куче)
+- Стек вызовов методов
+- Каждый поток имеет **свой** стек → потокобезопасен
+- Заполнен → `StackOverflowError`
+- Быстрый доступ
 
-```yaml
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
-  name: my-ingress
-spec:
-  rules:
-  - host: app.example.com
-    http:
-      paths:
-      - path: /api
-        pathType: Prefix
-        backend:
-          service:
-            name: api-service
-            port:
-              number: 8080
+### Heap (Куча)
+- Все объекты и массивы
+- Общая для всех потоков → нужна синхронизация
+- Управляется GC
+- Заполнена → `OutOfMemoryError`
+- Разбита на Young Generation (Eden, S0, S1) и Old Generation
+
+```java
+int x = 5;              // примитив → в стеке
+String s = new String(); // ссылка s → в стеке, объект String → в куче
 ```
 
-- **Ingress Controller** — реализация (nginx, traefik, istio)
-- Ingress без контроллера не работает
-- Может терминировать TLS
+---

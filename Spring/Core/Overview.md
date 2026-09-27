@@ -179,57 +179,27 @@ spring:
 
 ---
 
-## Преимущества Spring Boot
 
-1. **Dependency Management** — согласованные версии зависимостей через BOM
-2. **Автоконфигурация** — `@EnableAutoConfiguration` настраивает компоненты по classpath
-3. **Встроенный сервер** — Tomcat/Jetty/Undertow, не нужен внешний WAR деплой
-4. **Actuator** — готовые `/health`, `/metrics`, `/info` endpoints
-5. **Нет XML-конфигурации**
-6. **Стартеры** — `spring-boot-starter-*` собирают нужные зависимости
+
+
+
+
+
 
 ---
 
-## Свой стартер
+### Дополнение к созданию ApplicationContext
 
-```
-my-starter/
-├── src/main/java/
-│   └── com/example/
-│       ├── MyProperties.java       (@ConfigurationProperties)
-│       └── MyAutoConfiguration.java (@Configuration + @ConditionalOnClass...)
-└── src/main/resources/
-    └── META-INF/spring/
-        └── org.springframework.boot.autoconfigure.AutoConfiguration.imports
+## Шаг 1 — Создание ApplicationContext
+
+java
+
+```java
+ApplicationContext ctx = new AnnotationConfigApplicationContext(AppConfig.class);
 ```
 
-```
-# AutoConfiguration.imports
-com.example.MyAutoConfiguration
-```
+`AnnotationConfigApplicationContext` внутри себя создаёт:
 
----
-
-## Spring Cloud Gateway
-
-API Gateway для микросервисов на реактивном стеке (WebFlux).
-
-```yaml
-spring:
-  cloud:
-    gateway:
-      routes:
-        - id: user-service
-          uri: lb://USER-SERVICE  # load balanced
-          predicates:
-            - Path=/api/users/**
-          filters:
-            - StripPrefix=1
-            - AddRequestHeader=X-Request-Id, {requestId}
-```
-
-**Возможности:**
-- Routing по path, header, method
-- Фильтры (rate limiting, auth, logging)
-- Load balancing через Spring Cloud LoadBalancer
-- Circuit Breaker интеграция
+- `DefaultListableBeanFactory` — реестр всех BeanDefinition и сам IoC-контейнер
+- `AnnotatedBeanDefinitionReader` — читает классы с аннотациями
+- `ClassPathBeanDefinitionScanner` — сканирует пакеты
