@@ -1,6 +1,12 @@
 # Kotlin Dispatchers
 
-## 2. Kotlin Dispatchers
+## За две минуты
+
+- Default подходит для CPU задач, IO — для обычного блокирующего I/O; ни один dispatcher не исправит сам по себе перегрузку внешнего сервиса.
+- `limitedParallelism(10)` ограничивает одновременно исполняемые задачи на view dispatcher, но не все незавершённые запросы.
+- Для ограничения запросов к API используй semaphore/лимит на самой операции.
+
+---
 
 ### Что такое Dispatcher
 
@@ -22,7 +28,7 @@ launch {
 
 ### Dispatchers.Default
 
-- Пул потоков = `max(2, число ядер CPU)`
+- Обычно использует общий пул для CPU задач; точная степень параллелизма зависит от среды и настройки
 - Оптимизирован под CPU-intensive задачи
 - Использовать: парсинг, сортировка, вычисления, сериализация
 
@@ -46,7 +52,7 @@ withContext(Dispatchers.Default) {
 
 ### Dispatchers.IO
 
-- Пул потоков = `max(64, число ядер CPU)` (настраивается через `kotlinx.coroutines.io.parallelism`)
+- Параллелизм блокирующего I/O по умолчанию ограничен параметром, связанным с `max(64, число ядер)`; его можно настроить
 - Оптимизирован под блокирующие I/O операции
 - Использовать: JDBC, файлы, блокирующие HTTP клиенты, любой блокирующий код
 
@@ -58,7 +64,7 @@ withContext(Dispatchers.IO) {
 }
 ```
 
-**Важно:** IO и Default **разделяют потоки** через механизм `LimitedParallelism`. IO создаёт потоки поверх Default пула но с отдельным лимитом.
+**Важно:** IO и Default **разделяют потоки** через механизм `LimitedParallelism`. IO и Default разделяют потоки; переключение контекста не обязано означать переход на другой конкретный поток.
 
 ---
 
@@ -90,8 +96,8 @@ withContext(Dispatchers.Unconfined) {
 
 ```kotlin
 // Dispatcher + трейсинг контекст вместе
-withContext(Dispatchers.IO + observationRegistry.asContextElement()) {
-    // IO пул + Micrometer трейсинг сохранён
+withContext(Dispatchers.IO + CoroutineName("load-user")) {
+    // IO dispatcher и имя корутины — разные элементы одного контекста
     userRepository.findById(id)
 }
 ```
@@ -107,8 +113,8 @@ withContext(Dispatchers.IO + observationRegistry.asContextElement()) {
 val limitedDispatcher = Dispatchers.IO.limitedParallelism(10)
 
 withContext(limitedDispatcher) {
-    // максимум 10 потоков одновременно
-    // полезно для rate limiting к внешним API
+    // не больше 10 одновременно исполняемых задач этого dispatcher
+    // для ограничения числа незавершённых запросов используй Semaphore
 }
 ```
 

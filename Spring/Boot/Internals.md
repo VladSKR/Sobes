@@ -1,3 +1,13 @@
+# Spring Boot: BeanDefinition и refresh()
+
+## За две минуты
+
+- BeanDefinition — описание будущего bean, а не готовый экземпляр.
+- BeanFactoryPostProcessor меняет определения до создания обычных bean; BeanPostProcessor обрабатывает сами экземпляры.
+- Автоконфигурация регистрирует бины при выполнении условий classpath и настроек.
+
+---
+
 ## BeanPostProcessor + Рефлексия
 
 **Задача:** выполнить логику над полями бина во время его инициализации.
@@ -88,13 +98,13 @@ public class DataSourceAutoConfiguration { ... }
 |2|`obtainFreshBeanFactory()`|Возвращает `DefaultListableBeanFactory`|
 |3|`prepareBeanFactory()`|ClassLoader, Aware-процессоры, встроенные бины (`environment` и др.)|
 |4|`postProcessBeanFactory()`|Хук для подклассов (сервлетный контекст)|
-|5|`invokeBeanFactoryPostProcessors()`|**Запуск `ConfigurationClassPostProcessor`** → все BeanDefinition зарегистрированы|
+|5|`invokeBeanFactoryPostProcessors()`|**Запуск `ConfigurationClassPostProcessor`** → регистрируются определения, обнаруженные конфигурацией|
 |6|`registerBeanPostProcessors()`|BeanPostProcessor-бины создаются раньше остальных|
 |7|`initMessageSource()`|i18n, заглушка если не определён|
 |8|`initApplicationEventMulticaster()`|Механизм событий (`@EventListener`)|
 |9|`onRefresh()`|Старт embedded сервера (Tomcat/Jetty)|
 |10|`registerListeners()`|Подписка `ApplicationListener`-бинов|
-|11|`finishBeanFactoryInitialization()`|**Создание всех singleton-бинов**, вызов BeanPostProcessor|
+|11|`finishBeanFactoryInitialization()`|**Создание оставшихся eager singleton-бинов**, вызов BeanPostProcessor|
 |12|`finishRefresh()`|`ContextRefreshedEvent`, старт `Lifecycle`-бинов|
 
 **Цепочка создания бина на шаге 11:**
@@ -109,11 +119,11 @@ BeanDefinition → instantiate → inject dependencies
 
 ## Ручное обновление контекста
 
-### context.refresh() повторно — опасно
+### Повторный refresh — не способ обновить настройки
 
-Пересоздаёт все singleton-бины. Старые ссылки становятся невалидными. В Spring Boot попытается поднять сервер повторно → `InstanceAlreadyExistsException`.
+Разные реализации ApplicationContext поддерживают повторный `refresh()` по-разному; для типичного Spring Boot контекста нельзя считать его безопасным методом обновления конфигурации. Это не обещание конкретного исключения: возможны отказ в повторном запуске и проблемы жизненного цикла ресурсов.
 
-### @RefreshScope + Spring Cloud — правильный способ
+### @RefreshScope в приложениях со Spring Cloud
 
 ```java
 @RefreshScope
@@ -128,7 +138,7 @@ public class MyService {
 POST /actuator/refresh
 ```
 
-Пересоздаются только `@RefreshScope`-бины.
+При соответствующей инфраструктуре обновляются beans с `@RefreshScope`; endpoint `/actuator/refresh` нужно включить и защитить осознанно. Не делай вывод, что это доступно в любом Spring Boot приложении из коробки.
 
 ### Программная регистрация нового бина
 

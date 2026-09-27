@@ -1,5 +1,13 @@
 # Kubernetes: что должен различать backend-разработчик
 
+## За две минуты
+
+- Pod запускает контейнеры, Deployment поддерживает желаемое число pod, Service даёт стабильный адрес для них.
+- Readiness исключает pod из новых запросов; liveness инициирует перезапуск при сбое.
+- Масштабирование pod не увеличивает автоматически ёмкость БД и downstream.
+
+---
+
 `Pod` — единица запуска контейнеров, часто эфемерная. `Deployment` управляет желаемым числом replicas и rolling update через ReplicaSet. `Service` даёт стабильную точку доступа к набору pod; `Ingress` и controller направляют внешний HTTP-трафик к Service, см. [[Infrastructure/Kubernetes-Ingress]].
 
 | Проверка | Вопрос |

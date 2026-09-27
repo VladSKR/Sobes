@@ -1,5 +1,13 @@
 # Spring Framework
 
+## За две минуты
+
+- IoC передаёт управление созданием объектов контейнеру; DI — способ передать объекту зависимости.
+- При одном конструкторе `@Autowired` не требуется; конструкторная инъекция делает обязательные зависимости явными.
+- AOP-прокси перехватывает внешние вызовы, поэтому self-invocation не запускает новый advice.
+
+---
+
 #spring #java #di #ioc
 
 ---
@@ -88,7 +96,8 @@ public class OrderService {
 ---
 
 ## Жизненный цикл бина
-#Современный вариант
+
+Сначала контейнер собирает BeanDefinition, затем создаёт нужные singleton-экземпляры. Для подробного разбора — [[Spring/Core/Bean-Lifecycle-Interview]].
 
 1. SpringApplication.run(...)  
 2. Создаётся ApplicationContext  
@@ -143,7 +152,7 @@ public BeanA(@Lazy BeanB beanB) {
 }
 ```
 
-3. **Setter injection** вместо конструктора:
+3. **Setter injection** иногда позволяет разорвать цикл на уровне создания объектов, но в Spring Boot циклические ссылки по умолчанию запрещены; сначала пересмотри зависимости:
 ```java
 @Autowired
 public void setBeanB(BeanB beanB) {
@@ -164,13 +173,15 @@ spring:
 
 | Метод                 | Механизм                   | Когда                   |
 | --------------------- | -------------------------- | ----------------------- |
-| **JDK Dynamic Proxy** | Реализует те же интерфейсы | Бин реализует интерфейс |
-| **CGLib**             | Наследование от класса     | Бин без интерфейса      |
+| **JDK Dynamic Proxy** | Реализует интерфейсы target | Когда выбран interface-based proxy |
+| **Class-based proxy** | Подкласс target | Когда выбран proxy по классу, в том числе при наличии интерфейса |
 
-**CGLib ограничения:**
+В Spring Boot для обычного AOP часто используются class-based proxy даже у классов с интерфейсом; конкретный выбор зависит от конфигурации.
+
+**Ограничения class-based proxy:**
 - Нельзя проксировать `final` классы
 - Нельзя переопределить `final` методы
-- Чуть хуже производительность
+- Разница производительности не должна быть главным критерием выбора без измерений
 
 ```java
 // AOP / @Transactional работает через прокси
@@ -179,20 +190,7 @@ spring:
 
 ---
 
-
-
-
-
-
-
-
----
-
-### Дополнение к созданию ApplicationContext
-
-## Шаг 1 — Создание ApplicationContext
-
-java
+## Пример: явное создание ApplicationContext
 
 ```java
 ApplicationContext ctx = new AnnotationConfigApplicationContext(AppConfig.class);

@@ -1,5 +1,13 @@
 # HashMap — полный разбор от и до
 
+## За две минуты
+
+- HashMap — массив бакетов; индекс зависит от hash ключа, совпавший бакет — коллизия.
+- При совпадении hash сравнивают ключи через equals; mutable ключ может стать недоступным после изменения.
+- Средний доступ близок к O(1), но зависит от распределения и роста таблицы; при конкуренции выбирай ConcurrentHashMap.
+
+---
+
 ---
 
 ## Структура в памяти
@@ -116,7 +124,7 @@ HashMap<K,V> map = new HashMap<>();
 // threshold  = capacity * loadFactor = 16 * 0.75 = 12
 ```
 
-Когда число элементов **превышает threshold** (при начальной ёмкости 16 — после добавления 13-го элемента) — **rehashing**:
+При добавлении нового элемента, когда **size превысит threshold** (при capacity 16, loadFactor 0.75 — обычно на 13-й вставке уникального ключа) — **rehashing**:
 
 ```
 1. Создаётся новый массив capacity * 2 = 32
@@ -166,7 +174,7 @@ class BadKey {
 
 ```
 0-7 элементов:   linked list    O(n) поиск в худшем случае
-8+ элементов:    красно-чёрное дерево  O(log n) поиск
+При превышении порога и capacity ≥ 64: возможно превращение списка в дерево; детали зависят от вставки
 ```
 
 Константы:
@@ -222,8 +230,8 @@ String val = map.get("key"); // null — но почему?
 if (map.containsKey("key")) {
     String v = map.get("key"); // точно есть ключ
 }
-// или:
-map.getOrDefault("key", "default");
+// getOrDefault не помогает отличить key -> null от отсутствующего ключа:
+map.getOrDefault("key", "default"); // если key есть и value == null, вернёт null
 ```
 
 ---
@@ -248,8 +256,8 @@ class User {
     // hashCode НЕ переопределён → использует Object.hashCode() — идентичностный хэш (не обязан совпадать с адресом в памяти)
 }
 
-User u1 = new User("Ivan"); // hashCode = 12345 (адрес)
-User u2 = new User("Ivan"); // hashCode = 67890 (другой адрес)
+User u1 = new User("Ivan"); // hashCode = 12345 (условный идентичностный хэш)
+User u2 = new User("Ivan"); // hashCode = 67890 (другой условный хэш)
 
 map.put(u1, "admin");
 map.get(u2); // null!
@@ -308,7 +316,7 @@ map.get(key); // null — hashCode изменился, бакет другой
 // HashMap — нет гарантий порядка
 Map<String, Integer> hashMap = new HashMap<>();
 hashMap.put("b", 2); hashMap.put("a", 1); hashMap.put("c", 3);
-// итерация: случайный порядок
+// порядок итерации не гарантирован (не обязательно случайный)
 
 // LinkedHashMap — порядок вставки
 Map<String, Integer> linkedMap = new LinkedHashMap<>();
@@ -372,7 +380,7 @@ map.merge(key, 1, Integer::sum); // удобно для счётчиков
 
 **1. Сравнение через == вместо equals:**
 ```java
-map.get(new Integer(5)) // до Java 9 создаёт новый объект
+map.get(Integer.valueOf(5)) // equals сравнит значения Integer, а не ссылки
 // Правильно: map.get(5) — автобоксинг использует кэш
 ```
 

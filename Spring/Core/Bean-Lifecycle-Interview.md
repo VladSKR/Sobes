@@ -1,5 +1,13 @@
 # Жизненный цикл Spring bean: ответы на уточнения
 
+## За две минуты
+
+- Сначала регистрируются BeanDefinition, затем создаются экземпляры с DI, callback-ами и BeanPostProcessor.
+- `@PostConstruct` — часть инициализации экземпляра; `@PreDestroy` относится к управляемому уничтожению.
+- Prototype внутри singleton не даёт новый экземпляр при каждом обращении без provider/lookup.
+
+---
+
 `SpringApplication.run` поднимает `ApplicationContext`. Во время `refresh()` сначала регистрируются BeanDefinition (описания), затем запускаются BeanFactoryPostProcessor: в частности, обработка конфигураций, сканирование `@Component`, методов `@Bean` и автонастроек. После этого регистрируются BeanPostProcessor, затем обычно создаются singleton bean.
 
 Для одного bean: создание экземпляра → внедрение зависимостей → Aware callbacks → `postProcessBeforeInitialization` → `@PostConstruct` / `afterPropertiesSet` / init-method → `postProcessAfterInitialization`, где, например, возможна AOP-прокси. При закрытии контекста для управляемых singleton вызываются destroy callbacks, включая `@PreDestroy`. Точный порядок специальных процессоров и lazy beans требует уточнений; это схема ответа, а не обещание, что каждый bean создаётся в один момент.

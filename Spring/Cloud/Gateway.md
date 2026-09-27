@@ -1,5 +1,12 @@
 # Spring Cloud Gateway
 
+## За две минуты
+
+- Gateway принимает внешний запрос, выбирает маршрут и может применить фильтры до/после вызова downstream.
+- Он не делает downstream отказоустойчивым без timeout, retry policy и ограничений нагрузки.
+
+---
+
 ## Spring Cloud Gateway
 
 API Gateway для микросервисов на реактивном стеке (WebFlux).

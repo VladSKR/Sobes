@@ -1,11 +1,17 @@
 # Row-level lock в PostgreSQL
 
-## 3. Row-level lock в PostgreSQL
+## За две минуты
+
+- `SELECT ... FOR UPDATE` берёт блокировку выбранных строк до конца транзакции.
+- Он помогает сериализовать конкурентное изменение, если чтение и запись находятся в той же транзакции.
+- Строчные блокировки не заменяют проверку бизнес-инварианта и обработку deadlock.
+
+---
 
 ### Как возникает автоматически
 
 ```sql
--- UPDATE автоматически ставит exclusive row-level lock
+-- UPDATE берёт нужные блокировки на изменяемые строки; точный режим зависит от операции
 UPDATE users SET age = 10 WHERE user_id = 1;
 -- Строка заблокирована до COMMIT или ROLLBACK
 -- Другие транзакции которые хотят UPDATE эту строку — ждут
@@ -20,9 +26,8 @@ UPDATE users SET age = 10 WHERE user_id = 1;
 2. T2: begin
 3. T1: UPDATE age=10  → T1 захватила row lock
 4. T2: UPDATE age=15  → T2 ЖДЁТ (строка заблокирована T1)
-5. T2: commit         → T2 ещё в очереди, не выполнилась
-6. T1: commit         → T1 освобождает lock, age=10
-                      → T2 получает lock, выполняет UPDATE age=15, коммитит
+5. T1: commit         → T1 освобождает lock, age=10
+6. T2: UPDATE продолжает работу, затем T2 выполняет commit → age=15
 
 Итог: age = 15 (не 10!)
 ```
@@ -32,8 +37,8 @@ UPDATE users SET age = 10 WHERE user_id = 1;
 ### Виды блокировок в PostgreSQL
 
 ```sql
--- 1. Автоматическая при UPDATE/DELETE — exclusive
-UPDATE users SET age = 10 WHERE id = 1; -- exclusive lock
+-- 1. Автоматическая при UPDATE/DELETE — блокировка изменяемой строки
+UPDATE users SET age = 10 WHERE id = 1; -- конкурентный UPDATE той же строки ждёт
 
 -- 2. SELECT FOR UPDATE — явная блокировка при чтении
 SELECT * FROM users WHERE id = 1 FOR UPDATE;
@@ -47,7 +52,7 @@ SELECT * FROM users WHERE id = 1 FOR SHARE;
 SELECT * FROM messages WHERE status = 'pending'
 FOR UPDATE SKIP LOCKED
 LIMIT 10;
--- Идеально для очередей задач — каждый воркер берёт свои строки
+-- Подходит для очередей задач при продуманном статусе и повторной обработке
 ```
 
 ---

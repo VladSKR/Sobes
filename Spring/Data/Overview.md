@@ -1,180 +1,56 @@
-# Spring Data / JPA / Hibernate / JDBC
+# JDBC, JPA, Hibernate и Spring Data JPA
 
-#spring #jpa #hibernate #jdbc #database
+## За две минуты
 
----
+- **JDBC** — Java API работы с соединением, SQL и результатом.
+- **JPA** (Jakarta Persistence в современных версиях) — стандарт отображения сущностей и работы через `EntityManager`; **Hibernate** — одна из реализаций.
+- **Spring Data JPA** — надстройка с интерфейсами репозиториев поверх JPA. Это не линейная цепочка наследования всех пяти технологий.
 
-## Иерархия абстракций
+## От прямого SQL к сущности
 
-```
-Spring Data (абстракция над всем)
-    └── JPA (стандарт/спецификация)
-            └── Hibernate (реализация JPA)
-                    └── JDBC (низкоуровневое API для СУБД)
-                            └── JDBC Driver (конкретный драйвер БД)
-```
-
----
-
-## JDBC
-
-Низкоуровневое Java API для работы с реляционными БД.
-
-### Основы
 ```java
-// 1. Получить соединение
-Connection conn = DriverManager.getConnection(url, user, password);
-
-// 2. Создать statement
-Statement stmt = conn.createStatement();
-ResultSet rs = stmt.executeQuery("SELECT * FROM users");
-
-// 3. Обработать результат
-while (rs.next()) {
-    String name = rs.getString("name");
+try (Connection c = dataSource.getConnection();
+     PreparedStatement ps = c.prepareStatement(
+         "SELECT name FROM users WHERE id = ?")) {
+    ps.setLong(1, id);
+    try (ResultSet rs = ps.executeQuery()) {
+        if (rs.next()) return rs.getString("name");
+    }
 }
-
-// 4. Закрыть ресурсы
-rs.close(); stmt.close(); conn.close();
 ```
 
-### Statement vs PreparedStatement vs CallableStatement
+`PreparedStatement` отделяет значения параметров от SQL; не склеивай пользовательский ввод в запрос. `Connection` управляет границей JDBC-транзакции (например, `commit`/`rollback` при выключенном autocommit). В Spring соединением обычно управляет транзакционная инфраструктура, а не ручной `DriverManager` в сервисе.
 
-| | Statement | PreparedStatement | CallableStatement |
-|---|---|---|---|
-| Параметры | Нет (конкатенация) | Через `?` | Через `?` |
-| SQL Injection | ❌ Уязвим | ✅ Защищён | ✅ Защищён |
-| Производительность | Хуже | Лучше (precompiled) | - |
-| Использование | DDL | DML запросы | Хранимые процедуры |
+В JPA `EntityManager` хранит persistence context — набор managed entities внутри текущего контекста. `find` может выполнить SELECT, `persist` делает новый объект managed, `remove` помечает на удаление, `merge` возвращает managed копию состояния detached entity. Не трактуй `merge` как немедленный `UPDATE`: SQL обычно отправляется при flush, а commit — отдельное действие. Изменение поля managed entity отслеживается через dirty checking и может попасть в SQL без `repository.save`.
 
 ```java
-// PreparedStatement
-PreparedStatement ps = conn.prepareStatement(
-    "SELECT * FROM users WHERE id = ? AND name = ?"
-);
-ps.setInt(1, 42);
-ps.setString(2, "Alice");
-ResultSet rs = ps.executeQuery();
-```
-
-### Batch операции
-```java
-PreparedStatement ps = conn.prepareStatement("INSERT INTO users VALUES (?, ?)");
-conn.setAutoCommit(false);
-
-for (User u : users) {
-    ps.setInt(1, u.getId());
-    ps.setString(2, u.getName());
-    ps.addBatch(); // не выполняет, только добавляет
+@Transactional
+public void rename(long id, String name) {
+    User u = entityManager.find(User.class, id);
+    u.setName(name); // dirty checking -> flush -> commit
 }
-
-ps.executeBatch(); // один раз отправляет все
-conn.commit();
 ```
 
----
+`JpaRepository<User, Long>` даёт `findById`, `save`, `delete`, paging и производные запросы. Репозиторий не отменяет принципов JPA: следи за LAZY, N+1, состоянием entity и границей транзакции. `JOIN FETCH`/`EntityGraph` могут помочь с N+1, но `JOIN FETCH` коллекций вместе с обычной пагинацией требует особой осторожности. [[Spring/Core/Transactions-and-JPA]] · [[Spring/Data/Hibernate-Batch-Insert]].
 
-## JPA — Java Persistence API
+## Если нужно глубже: mapping и репозитории
 
-Стандарт (спецификация) ORM для Java. Описывает аннотации и интерфейсы.
-
-### Основные аннотации
 ```java
 @Entity
-@Table(name = "users")
-public class User {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-    
-    @Column(name = "user_name", nullable = false, length = 100)
-    private String name;
-    
-    @ManyToOne
-    @JoinColumn(name = "department_id")
-    private Department department;
-    
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private List<Order> orders;
+class User {
+    @Id @GeneratedValue(strategy = GenerationType.SEQUENCE)
+    Long id;
+    @Column(nullable = false, length = 100)
+    String name;
+    @ManyToOne(fetch = FetchType.LAZY)
+    Department department;
+}
+
+interface UserRepository extends JpaRepository<User, Long> {
+    Optional<User> findByName(String name);
 }
 ```
 
-### EntityManager
-```java
-@PersistenceContext
-EntityManager em;
+`@Entity` сопоставляет объект таблице, `@Id` задаёт ключ, `@ManyToOne` описывает связь; конкретные SQL и момент загрузки определяют mapping и запрос. Для явного запроса можно использовать `@Query` с JPQL или native SQL. Для пакетного SQL без ORM `PreparedStatement.addBatch()` накапливает команды и `executeBatch()` отправляет пакет; транзакцию и закрытие ресурсов по-прежнему нужно управлять правильно.
 
-// CRUD
-em.persist(user);           // INSERT
-em.find(User.class, 1L);    // SELECT by PK
-em.merge(user);             // UPDATE
-em.remove(user);            // DELETE
-
-// JPQL
-List<User> users = em.createQuery(
-    "SELECT u FROM User u WHERE u.name = :name", User.class)
-    .setParameter("name", "Alice")
-    .getResultList();
-```
-
----
-
-## Hibernate
-
-Самая популярная реализация JPA.
-
-### N+1 проблема
-```java
-// Плохо: 1 запрос для списка + N запросов для каждого элемента
-List<Department> depts = em.createQuery("FROM Department", Department.class).getResultList();
-for (Department d : depts) {
-    d.getEmployees().size(); // N дополнительных запросов!
-}
-
-// Решение 1: JOIN FETCH
-em.createQuery("FROM Department d JOIN FETCH d.employees", Department.class)
-
-// Решение 2: @EntityGraph
-// Решение 3: @BatchSize
-@BatchSize(size = 20)
-private List<Employee> employees;
-```
-
-### FetchType
-```java
-@OneToMany(fetch = FetchType.LAZY)  // по умолчанию для коллекций — загружать при обращении
-@ManyToOne(fetch = FetchType.EAGER) // по умолчанию для @ManyToOne — загружать сразу
-```
-
----
-
-## Spring Data JPA
-
-Абстракция над JPA — убирает шаблонный код.
-
-```java
-public interface UserRepository extends JpaRepository<User, Long> {
-    // Авто-генерация запроса по имени метода
-    List<User> findByName(String name);
-    Optional<User> findByEmailAndActive(String email, boolean active);
-    
-    // JPQL
-    @Query("SELECT u FROM User u WHERE u.name = :name")
-    List<User> findByNameJpql(@Param("name") String name);
-    
-    // Native SQL
-    @Query(value = "SELECT * FROM users WHERE name = :name", nativeQuery = true)
-    List<User> findByNameNative(@Param("name") String name);
-}
-```
-
-### JpaRepository методы из коробки
-```java
-save(entity)        // INSERT или UPDATE
-findById(id)        // SELECT по PK → Optional
-findAll()           // SELECT *
-deleteById(id)      // DELETE
-count()             // COUNT(*)
-existsById(id)      // EXISTS
-findAll(Pageable)   // Пагинация + сортировка
-```
+**Проверь себя:** если изменил поле entity, полученной через `find` в транзакции, обязателен ли `save`? Нет; объясни dirty checking, flush и commit.
