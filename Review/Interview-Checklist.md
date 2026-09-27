@@ -1,13 +1,11 @@
-# Итоговый чеклист
-
-## Итоговый чеклист
+# Вопросы после интервью
 
 ### CompletableFuture:
 - [ ] runAsync / supplyAsync — разница
 - [ ] orTimeout / completeOnTimeout
 - [ ] allOf / anyOf
 - [ ] exceptionally / handle
-- [ ] Всегда передавать свой executor для I/O
+- [ ] Для блокирующего I/O определить отдельный ограниченный executor и таймаут клиента
 
 ### Quartz:
 - [ ] job-store-type: jdbc
@@ -24,16 +22,16 @@
 ### Оптимистичная блокировка:
 - [ ] Колонка version в таблице
 - [ ] WHERE id=? AND version=? при UPDATE
-- [ ] 0 строк → retry
+- [ ] 0 строк → конфликт: решить, повторять ли **всю** транзакцию
 - [ ] @Version в JPA
 
 ### Deadlock:
 - [ ] Упорядочивание блокировок по ID
-- [ ] SELECT FOR UPDATE ORDER BY id
-- [ ] Сериализация через Kafka — мегавариант
+- [ ] Как гарантировать согласованный порядок захвата строк и когда всё равно нужен retry
+- [ ] Почему сериализация через Kafka по одному ключу не решает автоматически перевод между двумя счетами
 
 ### Threads:
 - [ ] max-threads Tomcat, accept-count
-- [ ] 51-й запрос → очередь → отказ
+- [ ] Что происходит при заполненном пуле Tomcat и очередях; почему нет универсального «51-й запрос»
 - [ ] Virtual Threads Java 21 — spring.threads.virtual.enabled=true
 - [ ] Connection pool остаётся узким местом даже с Virtual Threads

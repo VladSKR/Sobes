@@ -1,5 +1,13 @@
 # Многопоточность
 
+## За две минуты
+
+- Thread исполняет код, Executor управляет отправкой задач и пулом.
+- JMM отвечает за видимость и порядок между потоками; volatile и lock решают разные задачи.
+- Future ждёт результат, CompletableFuture строит зависимые цепочки; таймаут ожидания не обязан остановить задачу.
+
+---
+
 #java #concurrency #threads #core
 
 ---
@@ -11,7 +19,7 @@
 
 ## Runnable vs Callable
 
-|                    | Runnable/lounch   | Callable/async<V>          |
+|                    | Runnable   | Callable<V>          |
 | ------------------ | ----------------- | -------------------------- |
 | Метод              | `run()`           | `call()`                   |
 | Возвращает         | void              | V                          |
@@ -47,7 +55,7 @@ while (running) { ... } // увидит изменение без volatile — �
 ```
 
 **Что даёт volatile:**
-1. Чтение/запись из главной памяти (не из кэша потока)
+1. Правила видимости и порядка по JMM (не обещание физического чтения из RAM)
 2. Запрет reordering инструкций вокруг переменной
 
 **Что НЕ даёт volatile:**
@@ -62,7 +70,7 @@ Future<String> future = executor.submit(() -> "result");
 
 future.isDone();        // завершена?
 future.isCancelled();   // отменена?
-future.cancel(true);    // отмена (true = прервать поток)
+future.cancel(true);    // запрос прерывания выполняющего потока; работа может не остановиться
 future.get();           // блокирует до завершения
 future.get(2, TimeUnit.SECONDS); // таймаут → TimeoutException
 ```
@@ -82,7 +90,11 @@ public <T> T executeWithTimeout(Callable<T> task, T fallback, long timeout, Time
     } catch (TimeoutException e) {
         future.cancel(true);
         return fallback;
-    } catch (Exception e) {
+    } catch (InterruptedException e) {
+        future.cancel(true);
+        Thread.currentThread().interrupt();
+        return fallback;
+    } catch (ExecutionException e) {
         return fallback;
     }
 }
@@ -113,7 +125,7 @@ cf.completeExceptionally(new RuntimeException());
 ```java
 // Преобразование результата
 cf.thenApply(s -> s.toUpperCase())        // синхронно
-cf.thenApplyAsync(s -> s.toUpperCase())   // в другом потоке
+cf.thenApplyAsync(s -> s.toUpperCase())   // запланировано через executor; не гарантия иного конкретного потока
 
 // Потребление (void)
 cf.thenAccept(s -> System.out.println(s))

@@ -1,5 +1,12 @@
 # Управление зависимостями
 
+## За две минуты
+
+- Maven BOM централизует согласованные версии зависимостей; scope определяет, где зависимость нужна.
+- `dependencyManagement` сам по себе не добавляет библиотеку в classpath проекта.
+
+---
+
 ## Maven/Gradle — Dependency Management
 
 ### Maven BOM (Bill of Materials)

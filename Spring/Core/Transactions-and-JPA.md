@@ -1,5 +1,13 @@
 # @Transactional: от прокси до COMMIT
 
+## За две минуты
+
+- Внешний вызов идёт через proxy и TransactionInterceptor к TransactionManager, который управляет ресурсом.
+- `flush` отправляет SQL, `commit` фиксирует транзакцию; managed entity может обновиться без явного `save`.
+- HTTP/Redis/Kafka не откатываются автоматически вместе с SQL.
+
+---
+
 ## Путь внешнего вызова
 
 ```text

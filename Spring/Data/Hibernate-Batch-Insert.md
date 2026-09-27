@@ -1,23 +1,12 @@
-# Hibernate Batch Insert
+# Hibernate batch insert
 
-## 3. Hibernate Batch Insert
+## За две минуты
 
-### Проблема N+1 INSERT
+- `saveAll` сохраняет набор сущностей, но само по себе не обещает отправку SQL в JDBC batch.
+- `hibernate.jdbc.batch_size` разрешает Hibernate группировать однотипные SQL-команды; `IDENTITY` у вставляемой сущности обычно мешает JDBC insert batching.
+- JDBC batch — несколько подготовленных операций за меньшее число сетевых взаимодействий; это **не обязательно один SQL INSERT с множеством VALUES**.
 
-```kotlin
-// saveAll НЕ гарантирует batch по умолчанию
-userRepository.saveAll(listOf(user1, user2, user3))
-
-// Hibernate без настроек выполняет:
-// INSERT INTO users VALUES (...)  -- 1
-// INSERT INTO users VALUES (...)  -- 2
-// INSERT INTO users VALUES (...)  -- 3
-// N отдельных round-trip к БД
-```
-
----
-
-### Включение batch insert
+## Пример
 
 ```yaml
 spring:
@@ -25,98 +14,28 @@ spring:
     properties:
       hibernate:
         jdbc:
-          batch_size: 50          # размер батча
-        order_inserts: true       # группировать INSERT одного типа вместе
-        order_updates: true       # то же для UPDATE
-        batch_versioned_data: true # батч для сущностей с @Version
+          batch_size: 50
+        order_inserts: true
 ```
 
-С этими настройками Hibernate группирует запросы:
-```sql
--- Один round-trip вместо 50
-INSERT INTO users (name, email) VALUES (?, ?), (?, ?), ... (50 раз)
-```
+Допустим, нужно вставить 1000 `User`. Без batching Hibernate отправит много отдельных insert. При подходящей стратегии ID и настройках он может собирать их по 50 команд в JDBC batch. Драйвер и БД могут отправить/переписать batch по-своему — по одному красивому SQL в логах нельзя надёжно оценивать число round trips.
 
----
+`IDENTITY` получает ID при самой вставке; для этой сущности Hibernate обычно отключает JDBC insert batching. С `SEQUENCE` и правильно настроенным генератором ID может быть получен заранее, что делает batching возможным. `allocationSize` уменьшает обращения к sequence в подходящей конфигурации, но не подставляй всегда арифметику вида «ровно 8 млн → 160 тысяч запросов»: влияют ID generator, драйвер, flush, ограничения и реальная нагрузка.
 
-### Проблема с IDENTITY генерацией ID
+При миллионах сущностей не накапливай всё в одном persistence context: периодически `flush()` и `clear()` в управляемой транзакции или применяй специализированную пакетную загрузку. `flush` отправляет SQL, но `commit` остаётся отдельной границей. Для проверки включи Hibernate statistics/JDBC metrics, смотри число подготовленных statements и выполненных batch, измеряй время и память. Наличие `batch_size` в YAML само по себе не доказывает эффект.
 
 ```java
-@Entity
-public class User {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY) // ПРОБЛЕМА
-    private Long id;
-}
-```
-
-`IDENTITY` стратегия требует выполнить INSERT чтобы получить ID от БД. Hibernate **отключает батчинг** для таких сущностей — нельзя батчить если нужен ID после каждой вставки.
-
-**Решение — SEQUENCE стратегия:**
-```java
+// Пример стратегии, которую можно использовать вместе с batching:
 @Id
 @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "user_seq")
 @SequenceGenerator(name = "user_seq", sequenceName = "user_sequence", allocationSize = 50)
 private Long id;
 ```
 
-`allocationSize = 50` — Hibernate резервирует 50 ID за один запрос к sequence, потом выдаёт их локально. Один запрос на sequence вместо 50.
+## Другие настройки и прямой JDBC
 
----
+`order_updates=true` может группировать UPDATE одного типа; `batch_versioned_data` требует учитывать версию Hibernate и драйвер. Для предсказуемого batch без ORM используй `PreparedStatement.addBatch()` и `executeBatch()` в транзакции; Spring `JdbcTemplate.batchUpdate` упрощает закрытие ресурсов. Это всё ещё пакет отдельных подготовленных команд, а не обязательный SQL с множеством VALUES.
 
-### Как это выглядело в твоём проекте с Kafka
+**Проверь себя:** почему `saveAll` и `batch_size` ещё не доказывают, что 1000 вставок превратились в 20 батчей? Нужно проверить генератор ID, SQL, настройки и реальные показатели JDBC.
 
-```java
-// Без батчинга — 4 млн записей = 8 млн запросов (select seq + insert)
-repository.saveAll(entities); // медленно
-
-// С батчингом:
-// - allocationSize = 50 → 4млн / 50 = 80к запросов к sequence
-// - batch_size = 50 → 4млн / 50 = 80к INSERT батчей
-// Итого ~160к запросов вместо 8 млн
-```
-
----
-
-### Проверка что батчинг работает
-
-```yaml
-# Включить логирование SQL статистики
-spring:
-  jpa:
-    properties:
-      hibernate:
-        generate_statistics: true
-
-logging:
-  level:
-    org.hibernate.stat: DEBUG
-```
-
-В логах увидишь:
-```
-Hibernate: 
-    batch size: 50
-    jdbc.batch.size: 50
-```
-
----
-
-### JDBC батчинг напрямую (максимальная производительность)
-
-Если Hibernate всё равно медленный — JDBC батч напрямую:
-
-```kotlin
-jdbcTemplate.batchUpdate(
-    "INSERT INTO users (name, email) VALUES (?, ?)",
-    object : BatchPreparedStatementSetter {
-        override fun setValues(ps: PreparedStatement, i: Int) {
-            ps.setString(1, users[i].name)
-            ps.setString(2, users[i].email)
-        }
-        override fun getBatchSize() = users.size
-    }
-)
-```
-
----
+Источник: [Hibernate User Guide — batching](https://docs.jboss.org/hibernate/orm/6.5/userguide/html_single/Hibernate_User_Guide.html#batch).

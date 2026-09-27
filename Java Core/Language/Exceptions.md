@@ -1,5 +1,13 @@
 # Exceptions (Исключения)
 
+## За две минуты
+
+- Checked исключение компилятор заставляет обработать или объявить; RuntimeException и Error — unchecked.
+- `finally` может скрыть первое исключение; try-with-resources сохраняет исключение закрытия как suppressed.
+- Ошибка в дочернем потоке не падает автоматически в вызвавший поток.
+
+---
+
 #java #exceptions #core
 
 ---
@@ -142,8 +150,7 @@ Throwable[] suppressed = e.getSuppressed();
 Когда исключение не перехвачено ни одним catch — вызывается `UncaughtExceptionHandler`.
 
 **Почему выводится последнее исключение:**
-JVM ищет handler в порядке: поток → ThreadGroup → default handler.
-По умолчанию — выводится stack trace последнего непойманного исключения.
+Поток использует свой UncaughtExceptionHandler; ThreadGroup может делегировать обработку default handler. Обработчик получает исключение, дошедшее до границы потока. Если finally бросил новое исключение, первоначальное теряется до вызова handler — см. раздел о подавлении исключений выше.
 
 ```java
 Thread.setDefaultUncaughtExceptionHandler((thread, throwable) -> {

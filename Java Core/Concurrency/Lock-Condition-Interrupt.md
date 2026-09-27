@@ -1,5 +1,13 @@
 # Lock, Condition, wait/notify и interrupt
 
+## За две минуты
+
+- `synchronized` освобождает монитор при выходе по исключению, а ReentrantLock требует `unlock()` в `finally` после успешного захвата.
+- `lockInterruptibly()` может бросить до захвата, поэтому нельзя вызывать `unlock()` в этом случае.
+- `await()` отпускает lock на время ожидания и повторно захватывает его перед возвратом.
+
+---
+
 ## ReentrantLock: правильный шаблон
 
 ```java

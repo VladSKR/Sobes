@@ -75,8 +75,8 @@ Object obj = "hello";
 Class<?> c = obj.getClass(); // java.lang.String (реальный тип, не Object)
 
 // Отличие от instanceof
-obj instanceof String  // true/false, учитывает наследование
-obj.getClass() == String.class // только точное совпадение типа
+boolean isString = obj instanceof String; // учитывает наследование
+boolean exact = obj.getClass() == String.class; // только точный класс
 ```
 
 → Подробнее: [[Java Core/Language/OOP#Рефлексия]]
@@ -98,24 +98,20 @@ Spring использует рефлексию для:
 
 ### 7. Почему в Kotlin нет checked exceptions
 
-1. Checked exceptions нарушают LSP — подтип не может сузить контракт throws
-2. Приводят к шаблонному коду и пустым `catch(Exception e) {}`
-3. Большие API становятся неудобны (каждый метод `throws IOException`)
-4. Исследования показали: не улучшают надёжность кода на практике
-5. Kotlin использует unchecked + `Result` / sealed классы для явной обработки ошибок
+Kotlin не заставляет объявлять `throws` или ловить checked exception на месте вызова. Java-метод всё равно может бросить `IOException` во время выполнения; его нужно обработать там, где есть стратегия восстановления. Не объясняй выбор языка «нарушением LSP»: это неверная причинно-следственная связь.
 
-→ Подробнее: [[Kotlin/Exceptions#Почему в Kotlin нет checked exceptions]]
+→ Подробнее: [[Kotlin/Exceptions#Почему нет обязательной проверки checked exceptions]]
 
 ---
 
-### 8. Почему выводится последний exception (UncaughtExceptionHandler)
+### 8. Почему может быть видно только последнее исключение
 
 При незловленном исключении JVM ищет `UncaughtExceptionHandler` в порядке:
 1. Обработчик потока (`thread.getUncaughtExceptionHandler()`)
 2. Обработчик ThreadGroup
 3. Default handler (`Thread.getDefaultUncaughtExceptionHandler()`)
 
-По умолчанию default handler выводит stack trace **последнего** незловленного исключения в stderr. Если в `finally` брошено новое исключение — оригинальное подавляется, видно только последнее.
+Если тело `try` бросило одно исключение, а `finally` бросил другое, наружу уйдёт исключение из `finally`: первое потеряется, если его специально не сохранить. В `try-with-resources` ошибка закрытия доступна через `getSuppressed()`. `UncaughtExceptionHandler` уже обрабатывает то исключение, которое дошло до границы потока; он не выбирает «последнее» из истории.
 
 → Подробнее: [[Java Core/Language/Exceptions#UncaughtExceptionHandler]]
 
@@ -215,8 +211,8 @@ map.entrySet().removeIf(entry -> condition(entry.getValue()));
 1. Вычисляется `hashCode()` ключа
 2. Применяется дополнительное перемешивание: `hash = key.hashCode() ^ (key.hashCode() >>> 16)`
 3. Индекс бакета: `index = hash & (capacity - 1)`
-4. В бакете — цепочка (linked list) или дерево (при > 8 элементов)
-5. При вставке — проверяется `equals()` для разрешения коллизий
+4. В бакете — цепочка или дерево, если выполнены пороги по длине и ёмкости
+5. При совпавшем hash ключ сравнивают через `equals()`
 
 HashSet = HashMap где значения = константа `PRESENT`.
 
@@ -224,7 +220,7 @@ HashSet = HashMap где значения = константа `PRESENT`.
 
 ---
 
-### 14. IdentityHashMap и EnumMap (+ IdentityHashSet, EnumSet)
+### 14. IdentityHashMap, EnumMap и EnumSet
 
 **IdentityHashMap:**
 - Сравнивает ключи через `==` (ссылки), а не `equals()`
@@ -252,13 +248,9 @@ map.size(); // 2 — разные ссылки!
 
 ---
 
-### 15. SOLID в коллекциях
+### 15. SOLID и выбор интерфейса коллекции
 
-- **S** — `ArrayList` отвечает только за хранение, не за бизнес-логику
-- **O** — `Collections.unmodifiableList()` расширяет без изменения
-- **L** — `LinkedList` заменяет `ArrayList` там где нужен `List`
-- **I** — `List`, `Queue`, `Deque` — разделённые специфичные интерфейсы
-- **D** — код зависит от `List`, `Map`, а не от `ArrayList`, `HashMap`
+Обычно метод принимает `List<T>` или `Map<K,V>`, если ему не нужны особенности конкретной реализации. Это пример зависимости от абстракции; остальные буквы SOLID не надо механически доказывать типами коллекций. См. [[Architecture/Design-Principles]].
 
 ---
 
@@ -300,6 +292,7 @@ spec:
     http:
       paths:
       - path: /users
+        pathType: Prefix
         backend:
           service:
             name: user-service
@@ -346,7 +339,7 @@ Consumer → schema_id → Schema Registry → десериализует
 {"jsonrpc": "2.0", "error": {"code": -32600, "message": "Invalid Request"}, "id": 1}
 ```
 
-**vs REST:** нет HTTP методов/статусов, всё через POST, метод в теле запроса.
+**vs REST:** JSON-RPC описывает вызов метода и формат сообщения независимо от конкретного транспорта; через HTTP его часто передают POST, но это не требование «всегда только POST». HTTP-статус может отражать транспортный результат, а поле `error` — ошибку RPC.
 
 ---
 
@@ -360,9 +353,9 @@ Consumer → schema_id → Schema Registry → десериализует
 **Почему не среднее:** среднее скрывает выбросы.
 
 ```
-1000 запросов: 990 по 10ms + 10 по 5000ms
-Average = (990*10 + 10*5000) / 1000 = ~60ms  ← вводит в заблуждение
-p99 = 5000ms  ← реальная проблема
+1000 запросов: 980 по 10ms + 20 по 5000ms
+Average = (980*10 + 20*5000) / 1000 = 109.8ms
+p99 ≈ 5000ms — показывает хвост; точный расчёт зависит от определения перцентиля
 ```
 
 **Инструменты профилирования:** Micrometer + Prometheus + Grafana, JProfiler, async-profiler.
