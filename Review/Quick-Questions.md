@@ -1,10 +1,13 @@
-# Вопросы без ответов — разобрать
+# Быстрые вопросы к повторению
 
-#questions #todo #java #spring
+#questions #review
 
 ---
 
-## Java Core
+## Вопросы по разным разделам
+
+Полные материалы находятся по ссылкам в ответах; новые вопросы добавляй в заметку соответствующей темы.
+
 
 ### 1. Как запустить программу через командную строку
 
@@ -42,7 +45,7 @@ JVM начинает с интерпретации байткода. JIT ком�
 
 **Оптимизации C2:** inlining методов, escape analysis, loop unrolling, devirtualization.
 
-→ Подробнее: [[06_JVM_GC]]
+→ Подробнее: [[Java Core/JVM/Overview]]
 
 ---
 
@@ -51,7 +54,7 @@ JVM начинает с интерпретации байткода. JIT ком�
 - **Статическое (compile-time):** `static`, `private`, `final` методы, перегрузка (overloading)
 - **Динамическое (runtime):** переопределение (`@Override`), полиморфизм, через vtable
 
-→ Подробнее: [[04_OOP#Динамическое vs Статическое связывание]]
+→ Подробнее: [[Java Core/Language/OOP#Динамическое vs Статическое связывание]]
 
 ---
 
@@ -61,7 +64,7 @@ JVM начинает с интерпретации байткода. JIT ком�
 - **Агрегация** — "has-a", часть может жить без целого (Department → Employee)
 - **Композиция** — "owns-a", часть не живёт без целого (House → Room)
 
-→ Подробнее: [[04_OOP#Композиция, Агрегация, Ассоциация]]
+→ Подробнее: [[Java Core/Language/OOP#Композиция, Агрегация, Ассоциация]]
 
 ---
 
@@ -76,7 +79,7 @@ obj instanceof String  // true/false, учитывает наследовани�
 obj.getClass() == String.class // только точное совпадение типа
 ```
 
-→ Подробнее: [[04_OOP#Рефлексия]]
+→ Подробнее: [[Java Core/Language/OOP#Рефлексия]]
 
 ---
 
@@ -89,7 +92,7 @@ Spring использует рефлексию для:
 4. AOP — проксирование через CGLib/JDK Proxy
 5. Jackson — сериализация/десериализация через поля
 
-→ Подробнее: [[04_OOP#Рефлексия в Spring]]
+→ Подробнее: [[Spring/Core/Reflection#Рефлексия в Spring]]
 
 ---
 
@@ -101,7 +104,7 @@ Spring использует рефлексию для:
 4. Исследования показали: не улучшают надёжность кода на практике
 5. Kotlin использует unchecked + `Result` / sealed классы для явной обработки ошибок
 
-→ Подробнее: [[03_Exceptions#Почему в Kotlin нет checked exceptions]]
+→ Подробнее: [[Kotlin/Exceptions#Почему в Kotlin нет checked exceptions]]
 
 ---
 
@@ -114,7 +117,7 @@ Spring использует рефлексию для:
 
 По умолчанию default handler выводит stack trace **последнего** незловленного исключения в stderr. Если в `finally` брошено новое исключение — оригинальное подавляется, видно только последнее.
 
-→ Подробнее: [[03_Exceptions#UncaughtExceptionHandler]]
+→ Подробнее: [[Java Core/Language/Exceptions#UncaughtExceptionHandler]]
 
 ---
 
@@ -133,7 +136,7 @@ Future<?> f = executor.submit(() -> { throw new RuntimeException(); });
 f.get(); // только здесь узнаём об исключении
 ```
 
-→ Подробнее: [[05_Multithreading#Отслеживание исключений в потоках]]
+→ Подробнее: [[Java Core/Concurrency/Overview#Отслеживание исключений в потоках]]
 
 ---
 
@@ -154,7 +157,7 @@ List<String> list = new ArrayList<>();
 // get(0) возвращает Object, компилятор добавляет (String) каст
 ```
 
-→ Подробнее: [[02_Generics#Type Erasure]]
+→ Подробнее: [[Java Core/Language/Generics#Type Erasure]]
 
 ---
 
@@ -203,7 +206,7 @@ list.removeIf(s -> condition(s));
 map.entrySet().removeIf(entry -> condition(entry.getValue()));
 ```
 
-→ Подробнее: [[01_Collections#Удаление элементов при итерации]]
+→ Подробнее: [[Java Core/Collections/Overview#Удаление элементов при итерации]]
 
 ---
 
@@ -217,7 +220,7 @@ map.entrySet().removeIf(entry -> condition(entry.getValue()));
 
 HashSet = HashMap где значения = константа `PRESENT`.
 
-→ Подробнее: [[01_Collections#Как работает HashMap]]
+→ Подробнее: [[Java Core/Collections/Overview#Как работает HashMap]]
 
 ---
 
@@ -280,7 +283,7 @@ class UserService {
 
 ### 17. Способы injection в Spring: constructor, setter, поле
 
-→ [[01_Spring_Core#Способы Dependency Injection]]
+→ [[Spring/Core/Overview#Способы Dependency Injection]]
 
 ---
 
@@ -306,7 +309,7 @@ spec:
 
 Требует **Ingress Controller** (nginx, traefik, istio) — без него не работает.
 
-→ Подробнее: [[06_JVM_GC#Ingress]]
+→ Подробнее: [[Infrastructure/Kubernetes-Ingress#Ingress (Ингресс)]]
 
 ---
 
@@ -368,10 +371,10 @@ p99 = 5000ms  ← реальная проблема
 
 ### 22. Горизонтальное масштабирование
 
-→ [[01_Architecture#Горизонтальное масштабирование]]
+→ [[Architecture/Distributed-Systems#Горизонтальное масштабирование]]
 
 ---
 
 ### 23. Симметричное / асимметричное шифрование
 
-→ [[01_Architecture#Симметричное vs Асимметричное шифрование]]
+→ [[Architecture/Distributed-Systems#Симметричное vs Асимметричное шифрование]]

@@ -1,64 +1,44 @@
-# 📚 Индекс — Backend Developer Notes
+# Карта заметок для собеседования
 
-#index #moc
+Начни с [[Review/Quick-Questions|быстрых вопросов]] и [[Review/Senior-Checklist|чеклиста Senior]]. Разбор конкретной темы открывай по ссылкам ниже.
 
----
+## Java Core — только язык и платформа Java
 
-## Java Core
+- **Язык:** [[Java Core/Language/OOP|ООП и Object]], [[Java Core/Language/Generics|дженерики]], [[Java Core/Language/Exceptions|исключения]], [[Java Core/Language/Annotations|аннотации]].
+- **Коллекции:** [[Java Core/Collections/Overview|обзор]], [[Java Core/Collections/HashMap|HashMap подробно]].
+- **Concurrency:** [[Java Core/Concurrency/Overview|основы, JMM, Future]], [[Java Core/Concurrency/Synchronization-Interview|volatile и блокировки]], [[Java Core/Concurrency/Race-Conditions|гонки]], [[Java Core/Concurrency/CompletableFuture-Interview|практика CompletableFuture]].
+- **JVM:** [[Java Core/JVM/Overview|память, JIT, GC и запуск]], [[Java Core/JVM/G1-vs-ZGC|G1 и ZGC]].
 
-| Файл | Темы |
-|---|---|
-| [[01_Collections]] | ArrayList, LinkedList, HashMap, HashSet, HashCode, PECS, Concurrent Collections, Iterator |
-| [[02_Generics]] | Type Erasure, Wildcards, PECS, Bounded Types, Reification |
-| [[03_Exceptions]] | Checked/Unchecked, Multicatch, Nested, Propagation, Suppressed, UncaughtExceptionHandler |
-| [[04_OOP]] | Принципы ООП, Статическое/динамическое связывание, Композиция/Агрегация, SOLID, Рефлексия |
-| [[05_Multithreading]] | Runnable/Callable, Volatile, Future, CompletableFuture, Синхронизация |
-| [[06_JVM_GC]] | Структура памяти, JIT, GC алгоритмы, G1, Аннотации RetentionPolicy, Ingress |
+## Kotlin
 
----
+[[Kotlin/Exceptions|Исключения]] · [[Kotlin/Dispatchers|Диспетчеры корутин]]
 
 ## Spring
 
-| Файл | Темы |
-|---|---|
-| [[01_Spring_Core]] | IoC, DI, Способы инъекций, Скоупы, Жизненный цикл бина, Циклические зависимости, Проксирование |
-| [[02_JPA_Hibernate_JDBC]] | JDBC, Statement, Batch, JPA аннотации, EntityManager, Hibernate N+1, Spring Data JPA |
+- **Core:** [[Spring/Core/Overview|IoC, DI, бины и прокси]], [[Spring/Core/Reflection|рефлексия в Spring]].
+- **Boot:** [[Spring/Boot/Overview|стартеры и автоконфигурация]], [[Spring/Boot/Internals|BeanDefinition и refresh()]].
+- **Data:** [[Spring/Data/Overview|JDBC, JPA, Hibernate]], [[Spring/Data/Hibernate-Batch-Insert|batch insert]].
+- **Cloud:** [[Spring/Cloud/Gateway|Gateway]].
 
----
+## Данные и интеграция
 
-## Базы данных
+- **БД:** [[Databases/Overview|основы БД]], [[Databases/Row-Locks|строчные блокировки]], [[Databases/Optimistic-Locking|оптимистичная блокировка]], [[Databases/Deadlocks|взаимные блокировки]].
+- **Сообщения:** [[Messaging/Kafka|Kafka]].
+- **API:** [[API/REST-and-Protocols|REST, HTTP, SOAP и RPC]].
 
-| Файл | Темы |
-|---|---|
-| [[01_Databases]] | SQL vs NoSQL, ACID, Уровни изоляции, Блокировки, Deadlock, Индексы, EXPLAIN, WAL, Репликация, Партиционирование |
+## Архитектура и эксплуатация
 
----
+[[Architecture/Distributed-Systems|Распределённые системы]] · [[Architecture/Design-Principles|SOLID и YAGNI]] · [[Architecture/Threading-Models|Потоки, event loop и virtual threads]] · [[Operations/Quartz-Scheduling|Quartz]] · [[Infrastructure/Kubernetes-Ingress|Kubernetes Ingress]] · [[Testing/Testing-Pyramid|Тестирование]] · [[Tooling/Dependency-Management|Сборка и зависимости]]
 
-## Архитектура
+## Повторение
 
-| Файл | Темы |
-|---|---|
-| [[01_Architecture]] | CAP, SAGA, Circuit Breaker, OSI, WebSocket, SSE, Webhook, Backpressure, Горизонтальное масштабирование, Перцентили, Шифрование |
-| [[02_Kafka]] | Партиционирование, Семантика доставки, Consumer Groups, Event Streaming |
-| [[03_REST_API]] | REST, HTTP методы, Идемпотентность, PATCH vs PUT, HATEOAS, SOAP, Пирамида тестирования, Maven |
+[[Review/Quick-Questions|Быстрые вопросы]] · [[Review/Interview-Checklist|Вопросы с интервью]] · [[Review/Senior-Checklist|Пробелы Senior]]
 
----
+## Куда добавлять новое
 
-## Быстрые ссылки по темам
+1. Одна тема — одна заметка в подходящей папке. Перед созданием проверь ссылки выше и поиск Obsidian, чтобы дополнить существующую заметку.
+2. Java SE (язык, коллекции, JVM, concurrency) → `Java Core/`. Kotlin, Spring, БД, брокеры и инфраструктура → одноимённые разделы.
+3. Сначала краткий ответ для повторения, затем механизм, пример и блок «Где я ошибался / что проверить».
+4. Новую заметку добавь в этот индекс. В `Review/` храни вопросы и чеклисты со ссылками на канонические заметки.
 
-### Коллекции
-- Как работает HashMap → [[01_Collections#Как работает HashMap]]
-- Удаление при итерации → [[01_Collections#Удаление элементов при итерации]]
-- Concurrent коллекции → [[01_Collections#Concurrent коллекции]]
-
-### Многопоточность
-- CompletableFuture → [[05_Multithreading#CompletableFuture]]
-- Исключения в потоках → [[05_Multithreading#Отслеживание исключений в потоках]]
-
-### Spring
-- Жизненный цикл бина → [[01_Spring_Core#Жизненный цикл бина]]
-- Циклические зависимости → [[01_Spring_Core#Циклическая зависимость]]
-
-### БД
-- Уровни изоляции → [[01_Databases#Уровни изоляции транзакций]]
-- Индексы PostgreSQL → [[01_Databases#Типы индексов PostgreSQL]]
+> Материалы перенесены из исходных заметок с сохранением разделов. При повторении сверяй спорные численные оценки и примеры с документацией выбранной версии Java, Spring и PostgreSQL.
