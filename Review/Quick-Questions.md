@@ -157,7 +157,7 @@ List<String> list = new ArrayList<>();
 // get(0) возвращает Object, компилятор добавляет (String) каст
 ```
 
-→ Подробнее: [[Java Core/Language/Generics#Type Erasure]]
+→ Подробнее: [[Java Core/Language/Generics#Type Erasure (Стирание типов)]]
 
 ---
 
