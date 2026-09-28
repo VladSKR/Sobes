@@ -118,13 +118,22 @@ if (lock.tryLock()) {
     // не захватили — делаем что-то другое
 }
 
-// С таймаутом
+// С таймаутом (метод объявляет throws InterruptedException)
 if (lock.tryLock(100, TimeUnit.MILLISECONDS)) {
-    // ...
+    try {
+        // работаем под lock
+    } finally {
+        lock.unlock();
+    }
 }
 
-// Прерываемое ожидание
-lock.lockInterruptibly(); // бросит InterruptedException если поток прерван
+// Прерываемое ожидание (метод объявляет throws InterruptedException)
+lock.lockInterruptibly(); // может бросить до захвата
+try {
+    // работаем под lock
+} finally {
+    lock.unlock();
+}
 
 // Fairness — при конкуренции старается соблюдать порядок ожидания; не абсолютная гарантия планирования
 ReentrantLock fairLock = new ReentrantLock(true);
