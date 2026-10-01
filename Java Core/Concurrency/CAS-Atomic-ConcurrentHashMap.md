@@ -3,7 +3,8 @@
 ## За две минуты
 
 - CAS меняет значение, только если оно всё ещё равно ожидаемому; при конфликте операцию надо повторить или обработать отказ.
-- `AtomicInteger.incrementAndGet` атомарен; `volatile int++` — нет.
+- `getAndIncrement()` возвращает старое значение, `incrementAndGet()` — новое; оба атомарно увеличивают счётчик. `volatile int++` — нет.
+- ABA: значение вернулось к прежнему, но история изменилась. `AtomicStampedReference` проверяет ссылку вместе со штампом версии.
 - `AtomicReference` атомарно заменяет ссылку, а не все поля объекта. Сравнение ссылок идёт через `==`.
 - Атомарность CAS — гарантия Java API; конкретные инструкции CPU и работа кэша — детали реализации.
 - У ConcurrentHashMap отдельные методы потокобезопасны, но `containsKey` + `put` вместе не атомарны.
@@ -18,6 +19,16 @@ count.incrementAndGet(); // атомарный инкремент
 ```
 
 `volatile` видит изменения, но `count++` теряет обновления. `AtomicInteger` обеспечивает атомарность своей операции. При высокой конкуренции повторы CAS могут быть дорогими; `LongAdder` полезен для счётчиков, когда нужен быстрый инкремент и допустимо чтение суммы без атомарного общего snapshot.
+
+## AtomicInteger: какое значение возвращается
+
+```java
+AtomicInteger counter = new AtomicInteger(5);
+int a = counter.getAndIncrement(); // a = 5, counter = 6
+int b = counter.incrementAndGet(); // b = 7, counter = 7
+```
+
+Здесь вызовы идут последовательно. `getAndIncrement()` возвращает значение **до** своего инкремента, `incrementAndGet()` — **после** него. В обоих случаях увеличение и получение результата составляют одну атомарную операцию. При конкурентных вызовах отдельное последующее `get()` уже может увидеть чужое обновление.
 
 ## Почему два потока не могут одновременно успешно выполнить один CAS
 
@@ -35,6 +46,16 @@ do {
 ```
 
 Для простого инкремента используй готовый `incrementAndGet()`. CAS-loop показывает принцип оптимистического обновления: вычислить новое значение и применить его только к всё ещё актуальному состоянию. При конфликте вычисление повторяется; побочные эффекты вроде отправки платежа нельзя бездумно помещать внутрь такого цикла или функции `updateAndGet`.
+
+## Почему CAS-loop дорожает при конкуренции
+
+Если много потоков обновляют одно значение, несколько могут прочитать одинаковое состояние. Один успешно применяет обновление, остальные получают `false`, перечитывают значение и повторяют расчёт. Чем больше конфликтов, тем больше CPU уходит на попытки, которые ничего не изменили.
+
+На уровне CPU добавляются расходы на передачу права записи cache line между ядрами (cache-line bouncing). Поэтому «без Java-lock» не означает «без задержек» или «всегда быстрее блокировки». Lock-free алгоритм обеспечивает общий прогресс, но не гарантирует, что каждый отдельный поток быстро завершит свой CAS-loop: один поток может долго проигрывать другим.
+
+Для счётчика статистики при высокой конкуренции часто подходит `LongAdder`: обновления распределяются между несколькими ячейками. Его `sum()` не даёт атомарный общий снимок при параллельных обновлениях, поэтому для строгого лимита или выдачи уникальных последовательных номеров такая замена не подходит.
+
+При этом не считай любой метод `AtomicInteger` буквальным CAS-loop: конкретная реализация может использовать другую аппаратную операцию, например атомарное сложение. Контракт метода и его реализация — разные уровни.
 
 ## От Java API до CPU: где обеспечивается атомарность
 
@@ -70,7 +91,32 @@ boolean changed = ref.compareAndSet(initial, replacement);
 
 Если ссылка всё ещё указывает на `initial`, она атомарно переключится на `replacement`. Для такого подхода удобно неизменяемое состояние: читатели получают готовую версию. Если внутри объекта есть изменяемые поля или коллекции, `AtomicReference` не защищает их изменения; вложенное состояние тоже должно быть неизменяемым либо отдельно синхронизироваться.
 
-CAS проверяет текущее значение, а не всю историю: если ссылка сменилась A → B → A, сравнение с A снова может пройти. Это **ABA**; если для алгоритма важно замечать такие изменения, вместе с состоянием учитывают версию, например через `AtomicStampedReference`.
+## ABA: зачем нужна версия
+
+CAS проверяет текущее значение, а не всю историю: если ссылка сменилась A → B → A, сравнение с A снова может пройти. Это **ABA**. Ошибка возникает в алгоритмах, где возвращение того же значения не означает, что прежние предположения всё ещё верны.
+
+`AtomicStampedReference<T>` атомарно хранит пару **(ссылка, stamp)**. Если обновления меняют штамп, переход (A, 5) → (B, 6) → (A, 7) уже не пройдёт проверку старой пары (A, 5).
+
+```java
+Object a = new Object();
+Object b = new Object();
+AtomicStampedReference<Object> ref = new AtomicStampedReference<>(a, 5);
+
+// T1 запоминает согласованную пару.
+int[] stamp = new int[1];
+Object expected = ref.get(stamp);
+
+// Между чтением и CAS поток T2 успевает сделать A → B → A.
+ref.compareAndSet(a, b, 5, 6);
+ref.compareAndSet(b, a, 6, 7);
+
+// T1: ссылка совпадает, но ожидаемый stamp = 5, текущий = 7.
+boolean success = ref.compareAndSet(expected, new Object(), stamp[0], stamp[0] + 1);
+// success = false
+```
+
+Код последовательно изображает порядок действий двух потоков. Штамп **не увеличивается автоматически**: новые значения задаёт алгоритм. Читай пару через `get(stampHolder)`; отдельные `getReference()` и `getStamp()` могут получить данные от разных обновлений. Защита требует согласованного изменения версии всеми участниками; повторное использование прежнего штампа возвращает риск ABA.
+
 
 ## ConcurrentHashMap
 
@@ -91,10 +137,14 @@ map.compute(key, (k, old) -> old == null ? 1 : old + 1);
 
 ## Проверь себя
 
+- Чем отличаются результаты `getAndIncrement()` и `incrementAndGet()`?
+- Почему старый CAS для (A, 5) не пройдёт после (A, 5) → (B, 6) → (A, 7)? Кто меняет stamp?
+- Почему при высокой конкуренции CAS-loop может тратить много CPU, хотя общий прогресс сохраняется?
+
 - T1 и T2 выполняют `compareAndSet(5, 6)`. Почему при отсутствии других записей оба не могут вернуть `true`?
 - Почему когерентность кэша не спасает обычный `count++` от потерянного обновления?
 - Что сравнивает CAS в `AtomicReference`: ссылки или содержимое объектов?
 - Если нужной cache line ещё нет в кэше ядра, меняется ли гарантия атомарности?
 - Что гарантирует Java API, а что относится к реализации HotSpot и CPU?
 
-Источники: [AtomicReference JDK 21](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/concurrent/atomic/AtomicReference.html), [VarHandle JDK 21](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/invoke/VarHandle.html), [Atomic*](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/concurrent/atomic/package-summary.html), [ConcurrentHashMap JDK 21](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/concurrent/ConcurrentHashMap.html), [Intel: cache coherence при атомарных операциях](https://www.intel.com/content/www/us/en/support/articles/000099741/processors/intel-xeon-processors.html).
+Источники: [AtomicInteger JDK 21](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/concurrent/atomic/AtomicInteger.html), [AtomicStampedReference JDK 21](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/concurrent/atomic/AtomicStampedReference.html), [AtomicReference JDK 21](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/concurrent/atomic/AtomicReference.html), [VarHandle JDK 21](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/lang/invoke/VarHandle.html), [Atomic*](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/concurrent/atomic/package-summary.html), [ConcurrentHashMap JDK 21](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/concurrent/ConcurrentHashMap.html), [Intel: cache coherence при атомарных операциях](https://www.intel.com/content/www/us/en/support/articles/000099741/processors/intel-xeon-processors.html).
