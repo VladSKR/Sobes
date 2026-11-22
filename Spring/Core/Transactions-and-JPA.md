@@ -1,6 +1,6 @@
 # @Transactional: от прокси до COMMIT
 
-## За две минуты
+## Two-Minute Drill
 
 - Внешний вызов идёт через proxy и TransactionInterceptor к TransactionManager, который управляет ресурсом.
 - `flush` отправляет SQL, `commit` фиксирует транзакцию; managed entity может обновиться без явного `save`.

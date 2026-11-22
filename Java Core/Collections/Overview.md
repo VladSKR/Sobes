@@ -1,6 +1,6 @@
 # Коллекции
 
-## За две минуты
+## Two-Minute Drill
 
 - `Collection` объединяет List/Set/Queue, а Map — отдельная ветка интерфейсов.
 - HashMap выбирают для доступа по ключу, ArrayList — для большинства списков, Deque — для очереди.
@@ -14,28 +14,15 @@
 
 ## Иерархия коллекций
 
-```
-Collection
-├── List
-│   ├── ArrayList
-│   └── LinkedList
-├── Set
-│   ├── HashSet
-│   ├── LinkedHashSet
-│   └── TreeSet
-└── Queue
-    └── Deque
+Через `Iterable<T>` объект предоставляет `iterator()`, которым пользуется цикл `for-each`. `Collection<T>` расширяет `Iterable<T>`. `Map<K,V>` имеет отдельный контракт, а обходят его через представления `keySet()`, `values()` и `entrySet()`.
 
-Map
-├── HashMap
-├── LinkedHashMap
-├── TreeMap
-├── Hashtable
-├── IdentityHashMap
-└── EnumMap
-```
-
----
+| Интерфейс | Что определяет | Примеры реализаций |
+|---|---|---|
+| `List` | Упорядоченная последовательность, доступ по индексу | `ArrayList`, `LinkedList` |
+| `Set` / `SortedSet` | Уникальные элементы, у sorted-ветви элементам задан порядок | `HashSet`, `LinkedHashSet`, `TreeSet`, `EnumSet` |
+| `Queue` | Как получить следующий элемент | `PriorityQueue`, где извлекается наименьший элемент по порядку сравнения |
+| `Deque` → `Queue` | Доступ с обоих концов | `ArrayDeque`, `LinkedList` |
+| `Map` / `SortedMap` | По ключу хранится значение, у sorted-ветви задан порядок ключей | `HashMap`, `LinkedHashMap`, `TreeMap`, `EnumMap`, `IdentityHashMap` |
 
 ## List
 
@@ -52,8 +39,8 @@ Map
 
 **LinkedList** — двусторонняя очередь взаимосвязанных элементов. Каждый элемент указывает на предыдущий и следующий.
 
-- **Queue** — FIFO
-- **Deque** — FIFO/LIFO
+- **Queue** задаёт дисциплину очереди. FIFO распространена, у `PriorityQueue` другой порядок.
+- **Deque** можно применять как FIFO или как стек LIFO.
 
 ---
 
@@ -68,7 +55,7 @@ Map
 
 ### LinkedHashMap
 - Поддерживает doubly-linked list через все записи
-- Порядок итерации = порядок вставки ключей
+- По умолчанию итерация идёт в порядке вставки. Можно создать вариант с порядком доступа
 
 ### Hashtable
 - Synchronized, в отличие от HashMap
@@ -88,8 +75,12 @@ Map
 
 ### HashSet
 - Нет дубликатов
-- Случайный порядок
+- Порядок обхода не гарантирован
 - Основан на HashMap (ключи = элементы, значения = заглушка)
+
+### LinkedHashSet и TreeSet
+
+`LinkedHashSet` поддерживает порядок добавления и хранит дополнительные связи между элементами. `TreeSet` хранит элементы в порядке сравнения. Если comparator вернул 0, дерево считает элементы дубликатами. Например, comparator по длине строк сочтёт `"aa"` и `"bb"` одинаковыми для целей набора.
 
 ### EnumSet
 - Специализированный Set для enum
@@ -99,33 +90,7 @@ Map
 
 ## Как работает HashMap
 
-### Внутренняя структура
-- Массив `Node[] table` (бакеты)
-- Каждый бакет — связный список (или дерево при переполнении)
-
-### Алгоритм put(key, value)
-1. Вычислить `hash(key)`
-2. Определить индекс бакета: `index = hash & (capacity - 1)`
-3. Если бакет пуст — вставить
-4. Если занят — проверить equals() для каждого элемента в цепочке
-5. Совпадение → обновить; нет совпадения → добавить в конец
-
-### LoadFactor и resize
-- `loadFactor` по умолчанию = **0.75**
-- `threshold = capacity * loadFactor`
-- При превышении threshold → resize (удвоение capacity, rehash всех элементов)
-
-### Переполнение бакета (Treeify)
-- До Java 8: связный список в бакете
-- Java 8+: если в бакете > **8** элементов → преобразование в **красно-чёрное дерево** (TreeNode)
-- Обратно в список — если < **6** элементов
-
-### HashSet
-- Реализован через HashMap
-- Элементы Set = ключи HashMap
-- Значение = константа `PRESENT` (заглушка)
-
----
+`HashMap` хранит записи по бакетам. Чтобы найти ключ, мапа сначала вычисляет индекс бакета из хеша, затем проверяет совпавшие записи по хешу и равенству ключа. Подробный путь `put` и `get`, load factor, resize и превращение бакета в дерево показаны в [главе HashMap](HashMap.md). Внутри `HashSet` элементы служат ключами такой мапы, а значения заменены общей заглушкой.
 
 ## Iterable и Iterator
 
@@ -143,9 +108,9 @@ public interface Iterator<T> {
 
 ### Удаление элементов при итерации
 
-❌ **Нельзя** через обычный for-each — `ConcurrentModificationException`
+При структурном изменении обычного `ArrayList` во время for-each итератор может выбросить `ConcurrentModificationException`. Fail-fast помогает обнаруживать ошибку, но не гарантирует её обнаружение.
 
-✅ **Нужно** через `Iterator.remove()`:
+Чтобы удалить текущий элемент, используй `Iterator.remove()`, если итератор поддерживает удаление.
 ```java
 Iterator<String> it = list.iterator();
 while (it.hasNext()) {
@@ -156,7 +121,7 @@ while (it.hasNext()) {
 }
 ```
 
-✅ Или через `removeIf()`:
+Для удаления по условию подходит `removeIf()`, если коллекция изменяема.
 ```java
 list.removeIf(s -> s.equals("delete"));
 ```
@@ -167,7 +132,7 @@ list.removeIf(s -> s.equals("delete"));
 
 | Коллекция               | Аналог     | Особенность                                                        |
 | ----------------------- | ---------- | ------------------------------------------------------------------ |
-| `ConcurrentHashMap`     | HashMap    | Сегментированная блокировка (Java 8: CAS + synchronized по бакету) |
+| `ConcurrentHashMap`     | HashMap    | В OpenJDK 21 применяет CAS и синхронизацию по бакету для отдельных путей записи |
 | `CopyOnWriteArrayList`  | ArrayList  | Копирует массив при каждой записи. Безопасно для чтения            |
 | `CopyOnWriteArraySet`   | HashSet    | На основе CopyOnWriteArrayList                                     |
 | `ConcurrentLinkedQueue` | LinkedList | Lock-free, алгоритм Майкла-Скотта                                  |

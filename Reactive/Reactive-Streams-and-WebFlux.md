@@ -1,6 +1,6 @@
 # Reactive Streams, Reactor и WebFlux
 
-## За две минуты
+## Two-Minute Drill
 
 - Reactive Streams передаёт спрос через `request(n)`, но это не означает автоматической защиты всей HTTP-системы от перегрузки.
 - WebFlux экономит event-loop потоки только когда операции не блокируют их.

@@ -1,6 +1,6 @@
 # Spring Boot: BeanDefinition и refresh()
 
-## За две минуты
+## Two-Minute Drill
 
 - BeanDefinition — описание будущего bean, а не готовый экземпляр.
 - BeanFactoryPostProcessor меняет определения до создания обычных bean; BeanPostProcessor обрабатывает сами экземпляры.

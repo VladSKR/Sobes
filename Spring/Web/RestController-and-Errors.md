@@ -1,6 +1,6 @@
 # @RestController и HTTP-ответ
 
-## За две минуты
+## Two-Minute Drill
 
 - `@RestController` связывает HTTP маршрут с методом и сериализует результат в тело ответа.
 - `ResponseEntity` позволяет выбрать status/headers/body, а `@ControllerAdvice` централизует обработку ошибок.

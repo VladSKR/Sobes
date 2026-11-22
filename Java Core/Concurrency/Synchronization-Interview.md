@@ -1,6 +1,6 @@
 # Многопоточность: synchronized, ReentrantLock, volatile
 
-## За две минуты
+## Two-Minute Drill
 
 - Volatile даёт видимость и порядок, synchronized ещё и взаимное исключение.
 - ReentrantLock нужен ради `tryLock`, таймаута, прерываемого ожидания или Condition.

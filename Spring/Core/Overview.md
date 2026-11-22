@@ -1,6 +1,6 @@
 # Spring Framework
 
-## За две минуты
+## Two-Minute Drill
 
 - IoC передаёт управление созданием объектов контейнеру; DI — способ передать объекту зависимости.
 - При одном конструкторе `@Autowired` не требуется; конструкторная инъекция делает обязательные зависимости явными.
@@ -86,7 +86,7 @@ public class OrderService {
 
 | Скоуп | Создание | Когда |
 |---|---|---|
-| **singleton** (default) | Один раз на контейнер | Большинство сервисов |
+| **singleton** (default) | Один экземпляр на определение бина в контейнере | Большинство сервисов |
 | **prototype** | Новый при каждом getBean() | Stateful объекты |
 | **request** | На каждый HTTP-запрос | Web-слой |
 | **session** | На каждую HTTP-сессию | Пользовательские данные |
@@ -97,7 +97,9 @@ public class OrderService {
 
 ## Жизненный цикл бина
 
-Сначала контейнер собирает BeanDefinition, затем создаёт нужные singleton-экземпляры. Для подробного разбора — [[Spring/Core/Bean-Lifecycle-Interview]].
+`BeanDefinition` — описание того, как создать объект. `@Component` регистрирует класс при сканировании, а `@Bean` описывает фабричный метод. Это удобно, когда класс принадлежит внешней библиотеке. `BeanFactory` умеет находить определения и создавать бины. `ApplicationContext` добавляет события, работу с ресурсами и интеграцию с инфраструктурой Spring.
+
+Сначала контейнер собирает определения, затем создаёт обычные eager singleton-экземпляры. Детальный порядок запуска контекста описан в [главе про refresh](../Boot/Internals.md).
 
 1. SpringApplication.run(...)  
 2. Создаётся ApplicationContext  
@@ -112,24 +114,22 @@ public class OrderService {
 11. Каждый bean проходит lifecycle: instantiate -> populate dependencies -> aware callbacks -> before init -> init -> after init  
 12. Готовый singleton кладётся в singleton cache
 
-```
-1. Инстанцирование (конструктор)
-2. Установка свойств (DI)
-3. Aware-интерфейсы (BeanNameAware, BeanFactoryAware...)
-4. BeanPostProcessor.postProcessBeforeInitialization()
-5. Инициализация:
-   a) @PostConstruct
-   b) InitializingBean.afterPropertiesSet()
-   c) init-method
-6. BeanPostProcessor.postProcessAfterInitialization()
---- бин готов к использованию ---
-7. Деинициализация:
-   a) @PreDestroy
-   b) DisposableBean.destroy()
-   c) destroy-method
-```
+### Путь одного экземпляра
 
----
+| Этап | Что происходит |
+|---|---|
+| Инстанцирование | Контейнер вызывает конструктор или фабричный метод. Зависимости конструктора уже доступны |
+| Заполнение свойств | Spring внедряет предусмотренные зависимости через setter или поле |
+| Aware и обработка перед инициализацией | Контейнер передаёт данные бину через `BeanNameAware`, `BeanFactoryAware` и другие механизмы. `BeanPostProcessor.postProcessBeforeInitialization()` может вызывать, например, callback `@PostConstruct` |
+| Инициализация | При разных методах порядок — `@PostConstruct`, `InitializingBean.afterPropertiesSet()`, настроенный `initMethod` |
+| Обработка после инициализации | `postProcessAfterInitialization()` может вернуть AOP-прокси. Дальше клиент получает готовый бин |
+| Штатное закрытие | Для управляемых singleton вызываются `@PreDestroy`, `DisposableBean.destroy()`, настроенный `destroyMethod` в таком порядке, если это разные методы |
+
+На схеме из Questions показан обычный путь. Например, отдельные постпроцессоры могут предоставить прокси и раньше, а lazy singleton создаётся по требованию. При принудительной остановке процесса штатные callback-и не гарантированы.
+
+`prototype` создаётся на каждое обращение **к контейнеру**. Если однократно внедрить prototype в singleton, singleton будет держать полученный экземпляр. Для новых объектов используй, например, `ObjectProvider<T>.getObject()`. После выдачи prototype контейнер обычно не управляет его уничтожением. Освобождение его ресурсов должен организовать клиент.
+
+[Документация Spring о lifecycle](https://docs.spring.io/spring-framework/reference/core/beans/factory-nature.html)
 
 ## Циклическая зависимость
 
