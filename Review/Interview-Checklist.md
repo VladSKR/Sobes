@@ -1,13 +1,19 @@
 # Вопросы после интервью
 
-### CompletableFuture:
+## CompletableFuture
+
+[Глава про executor и Future](../Java%20Core/Concurrency/Executors-CompletableFuture.md)
+
 - [ ] runAsync / supplyAsync — разница
 - [ ] orTimeout / completeOnTimeout
 - [ ] allOf / anyOf
 - [ ] exceptionally / handle
 - [ ] Для блокирующего I/O определить отдельный ограниченный executor и таймаут клиента
 
-### Quartz:
+## Quartz
+
+[Глава про Quartz](../Operations/Quartz-Scheduling.md)
+
 - [ ] job-store-type: jdbc
 - [ ] isClustered: true
 - [ ] JobDetail + Trigger
@@ -31,7 +37,7 @@
 - [ ] Почему сериализация через Kafka по одному ключу не решает автоматически перевод между двумя счетами
 
 ### Threads:
-- [ ] max-threads Tomcat, accept-count
+- [ ] server.tomcat.threads.max, max-connections и accept-count
 - [ ] Что происходит при заполненном пуле Tomcat и очередях; почему нет универсального «51-й запрос»
 - [ ] Virtual Threads Java 21 — spring.threads.virtual.enabled=true
 - [ ] Connection pool остаётся узким местом даже с Virtual Threads
