@@ -1,17 +1,5 @@
 # Коллекции
 
-## Two-Minute Drill
-
-- `Collection` объединяет List/Set/Queue, а Map — отдельная ветка интерфейсов.
-- HashMap выбирают для доступа по ключу, ArrayList — для большинства списков, Deque — для очереди.
-- При коллизии сравнивают ключи, а не значения.
-
----
-
-#java #collections #core
-
----
-
 ## Иерархия коллекций
 
 Через `Iterable<T>` объект предоставляет `iterator()`, которым пользуется цикл `for-each`. `Collection<T>` расширяет `Iterable<T>`. `Map<K,V>` имеет отдельный контракт, а обходят его через представления `keySet()`, `values()` и `entrySet()`.
@@ -23,6 +11,10 @@
 | `Queue` | Как получить следующий элемент | `PriorityQueue`, где извлекается наименьший элемент по порядку сравнения |
 | `Deque` → `Queue` | Доступ с обоих концов | `ArrayDeque`, `LinkedList` |
 | `Map` / `SortedMap` | По ключу хранится значение, у sorted-ветви задан порядок ключей | `HashMap`, `LinkedHashMap`, `TreeMap`, `EnumMap`, `IdentityHashMap` |
+
+## Выбираем по операциям и порядку
+
+Для списка заказов в порядке выдачи достаточно `ArrayList`. Если тот же код проверяет, встречался ли ID, используй отдельный `HashSet<Long>`. Если нужно и быстро проверять наличие, и выдавать уникальные ID в порядке первого появления, подойдёт `LinkedHashSet<Long>`. Для выбора следующей задачи по сроку используй `PriorityQueue<Job>` с comparator. Итератор этой очереди не обязан выдавать задачи отсортированно, порядок гарантирует извлечение через `poll()`.
 
 ## List
 
@@ -141,32 +133,11 @@ list.removeIf(s -> s.equals("delete"));
 | `LinkedBlockingQueue`   | —          | Опционально ограниченная                                           |
 | `PriorityBlockingQueue` | —          | С приоритетом + блокировка                                         |
 
-### Преимущества concurrent-коллекций
-- Потокобезопасность без явной синхронизации
-- Лучшая производительность, чем `Collections.synchronizedXxx()`
-- Не бросают `ConcurrentModificationException` при итерации
-
----
+Итератор `ConcurrentHashMap` может видеть часть изменений во время обхода. Итератор `CopyOnWriteArrayList` читает снимок массива на момент создания. Выбирай коллекцию также по частоте записи и требованиям к обходу. Для примеров атомарного изменения см. [ConcurrentHashMap](../Concurrency/CAS-Atomic-ConcurrentHashMap.md#concurrenthashmap).
 
 ## PECS
 
-**Producer Extends, Consumer Super**
-
-```java
-// Producer (читаем из коллекции) → extends
-public void process(List<? extends Number> producer) {
-    Number n = producer.get(0); // OK
-    // producer.add(1); // ОШИБКА — нельзя писать
-}
-
-// Consumer (пишем в коллекцию) → super
-public void fill(List<? super Integer> consumer) {
-    consumer.add(1); // OK
-    // Integer n = consumer.get(0); // нельзя — только Object
-}
-```
-
----
+Если метод принимает коллекцию, укажи, читает он элементы или добавляет их. Для копирования источник поставляет значения через `? extends T`, получатель принимает через `? super T`. [Правила wildcard и пример copy](../Language/Generics.md)
 
 ## Контракт equals/hashCode
 
@@ -179,3 +150,13 @@ public void fill(List<? super Integer> consumer) {
 // Нарушение: переопределили equals, но не hashCode
 // → объект не найти в HashMap/HashSet
 ```
+
+## Two-Minute Drill
+
+- `Collection` объединяет List/Set/Queue, а Map — отдельная ветка интерфейсов.
+- HashMap выбирают для доступа по ключу, ArrayList — для большинства списков, Deque — для очереди.
+- При коллизии сравнивают ключи, а не значения.
+
+**Проверь себя.** Что выбрать, если нужно проверять наличие и обходить ключи в порядке вставки?
+
+LinkedHashSet, если значения не нужны. LinkedHashMap, если каждому ключу соответствует значение.

@@ -1,17 +1,5 @@
 # Exceptions (Исключения)
 
-## Two-Minute Drill
-
-- Checked исключение компилятор заставляет обработать или объявить; RuntimeException и Error — unchecked.
-- `finally` может скрыть первое исключение; try-with-resources сохраняет исключение закрытия как suppressed.
-- Ошибка в дочернем потоке не падает автоматически в вызвавший поток.
-
----
-
-#java #exceptions #core
-
----
-
 ## Иерархия
 
 Все объекты, которые можно выбросить через `throw`, наследуются от `Throwable`. Его две основные ветви — `Error` и `Exception`.
@@ -150,31 +138,7 @@ Thread.setDefaultUncaughtExceptionHandler((thread, throwable) -> {
 
 ## Исключения в потоках
 
-Если в дочернем потоке брошено исключение — **main поток не упадёт**:
-
-```java
-Thread t = new Thread(() -> {
-    throw new RuntimeException("в потоке"); // main не знает
-});
-t.start();
-
-// Чтобы поймать:
-t.setUncaughtExceptionHandler((thread, ex) -> {
-    System.out.println("Поймали: " + ex.getMessage());
-});
-```
-
-Через Future/CompletableFuture исключение оборачивается и бросается при `get()`:
-```java
-Future<?> f = executor.submit(() -> { throw new RuntimeException(); });
-try {
-    f.get(); // бросит ExecutionException
-} catch (ExecutionException e) {
-    Throwable cause = e.getCause(); // оригинальное исключение
-}
-```
-
----
+Раскрутка стека заканчивается в том потоке, где возникло исключение. Для `Thread` установи handler до `start()`. Для `submit()` проверь результат задачи, потому что стандартный пул сохраняет исключение в `Future`. [Пример Thread и обработчика](../Concurrency/00_Overview.md#отслеживание-исключений-в-потоках) · [Ожидание Future](../Concurrency/Executors-CompletableFuture.md#future-и-блокирующее-ожидание)
 
 ## Полезные паттерны
 
@@ -195,3 +159,17 @@ catch (Exception e) {
     throw new RuntimeException(e);
 }
 ```
+
+## Как сохранить диагностику на границе слоя
+
+Если JDBC бросил `SQLException`, инфраструктурный слой может перевести его в своё исключение и сохранить причину: `throw new StorageException("Cannot load order " + id, sqlError)`. `getCause()` показывает, какая ошибка привела к новой. `getSuppressed()` показывает дополнительные ошибки в ходе работы с ресурсами, например сбой `close()`. По одной строке сообщения эти случаи не различить. Обрабатывай ожидаемый конфликт отдельно, чтобы он не выглядел для клиента как общая ошибка сервера.
+
+## Two-Minute Drill
+
+- Checked исключение компилятор заставляет обработать или объявить; RuntimeException и Error — unchecked.
+- `finally` может скрыть первое исключение; try-with-resources сохраняет исключение закрытия как suppressed.
+- Ошибка в дочернем потоке не падает автоматически в вызвавший поток.
+
+**Проверь себя.** При ошибке записи и ошибке close какую увидит вызывающий в try-with-resources?
+
+Исключение записи останется основным, ошибка close будет в getSuppressed().

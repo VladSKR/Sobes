@@ -1,14 +1,5 @@
 # Lock, Condition, wait/notify и interrupt
 
-## Two-Minute Drill
-
-- `ReentrantLock` даёт взаимное исключение и видимость изменений, как `synchronized`, но позволяет попробовать захват без ожидания, задать таймаут, прервать ожидание и создать несколько `Condition`.
-- После **успешного** захвата освобождай lock в `finally`. Если `lockInterruptibly()` прервался или `tryLock()` вернул `false`, освобождать нечего.
-- `Condition.await()` освобождает связанный lock. После сигнала поток сначала снова захватывает lock, а затем проверяет условие в `while`. Сам сигнал не делает условие истинным.
-- `new ReentrantLock(true)` старается выдавать lock в порядке ожидания, но `tryLock()` без таймаута может обойти очередь.
-
----
-
 ## ReentrantLock: захват и освобождение
 
 ```java
@@ -124,4 +115,15 @@ public void put(String item) {
 - Как `tryLock()` без таймаута ведёт себя при `new ReentrantLock(true)`?
 - Когда ты выберешь `synchronized`, а когда `ReentrantLock`?
 
+## Почему условие проверяют в while
+
+У буфера два потребителя. Первый получил сигнал о появлении элемента, но ещё ждёт повторного захвата lock. Другой потребитель может забрать элемент первым. Кроме того, ожидание иногда завершается без сигнала. Поэтому под тем же lock повторно проверяй `while (queue.isEmpty()) notEmpty.await()`, после чего читай элемент. Увеличение размера и сигнал `notEmpty.signal()` тоже делай под lock. При `InterruptedException` вызывающий код должен получить отмену явно или увидеть восстановленный interrupt-флаг, если исключение преобразовано.
+
 Источники: [ReentrantLock](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/concurrent/locks/ReentrantLock.html), [Condition](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/concurrent/locks/Condition.html), [Lock](https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/util/concurrent/locks/Lock.html).
+
+## Two-Minute Drill
+
+- `ReentrantLock` даёт взаимное исключение и видимость изменений, как `synchronized`, но позволяет попробовать захват без ожидания, задать таймаут, прервать ожидание и создать несколько `Condition`.
+- После **успешного** захвата освобождай lock в `finally`. Если `lockInterruptibly()` прервался или `tryLock()` вернул `false`, освобождать нечего.
+- `Condition.await()` освобождает связанный lock. После сигнала поток сначала снова захватывает lock, а затем проверяет условие в `while`. Сам сигнал не делает условие истинным.
+- `new ReentrantLock(true)` старается выдавать lock в порядке ожидания, но `tryLock()` без таймаута может обойти очередь.

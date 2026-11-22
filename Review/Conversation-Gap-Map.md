@@ -8,7 +8,7 @@
 | Требовал подробного разбора | Зачем `finally` для Lock? Что будет при interrupt до захвата? | [[Java Core/Concurrency/Lock-Condition-Interrupt]] |
 | Требовал подробного разбора | CAS failure; `count++`; почему `containsKey + put` не атомарны? | [[Java Core/Concurrency/CAS-Atomic-ConcurrentHashMap]] |
 | Требовал подробного разбора | `thenCompose` vs `thenCombine`; что реально останавливает `orTimeout`? | [[Java Core/Concurrency/Executors-CompletableFuture]] |
-| Требовал подробного разбора | GC roots, G1 marking и эвакуация; Stack vs Heap? | [[Java Core/JVM/Memory-and-GC-Roots]] |
+| Требовал подробного разбора | GC roots, разница stack/heap, маркировка и эвакуация G1? | [Память JVM](../Java%20Core/JVM/Memory-and-GC-Roots.md), [сборщики](../Java%20Core/JVM/Garbage-Collectors.md) |
 | Требовал подробного разбора | LinkedList вставки, defensive copy, immutable view? | [[Java Core/Collections/Choosing-and-Immutability]] |
 | Требовал подробного разбора | Путь proxy → TransactionInterceptor → manager → JDBC/JPA → commit? | [[Spring/Core/Transactions-and-JPA]] |
 | Требовал подробного разбора | BeanDefinition, BPP, prototype, `@Bean` vs `@Component`? | [[Spring/Core/Overview#Жизненный цикл бина]] |
@@ -23,4 +23,4 @@
 
 ## Как повторять за 3–5 минут
 
-Открой строку таблицы → прочитай первый раздел заметки → закрой заметку и ответь на вопрос вслух → открой снова и сравни. Если не можешь объяснить механизм на одном примере, допиши свой пример прямо в тематическую заметку.
+Открой строку таблицы → найди и прочитай Two-Minute Drill, затем при необходимости вернись к примеру в главе → закрой заметку и ответь на вопрос вслух → открой снова и сравни. Если не можешь объяснить механизм на одном примере, допиши свой пример прямо в тематическую заметку.

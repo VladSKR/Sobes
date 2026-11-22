@@ -358,7 +358,7 @@ Average = (980*10 + 20*5000) / 1000 = 109.8ms
 p99 ≈ 5000ms — показывает хвост; точный расчёт зависит от определения перцентиля
 ```
 
-**Инструменты профилирования:** Micrometer + Prometheus + Grafana, JProfiler, async-profiler.
+Micrometer и Prometheus помогают измерить распределение задержек. Для профиля CPU или аллокаций подходят JProfiler и async-profiler. [Разбор метрик](../Operations/Observability-and-Percentiles.md)
 
 ---
 
