@@ -1,6 +1,6 @@
 # Lock, Condition, wait/notify и interrupt
 
-## За две минуты
+## Two-Minute Drill
 
 - `ReentrantLock` даёт взаимное исключение и видимость изменений, как `synchronized`, но позволяет попробовать захват без ожидания, задать таймаут, прервать ожидание и создать несколько `Condition`.
 - После **успешного** захвата освобождай lock в `finally`. Если `lockInterruptibly()` прервался или `tryLock()` вернул `false`, освобождать нечего.

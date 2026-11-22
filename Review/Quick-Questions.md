@@ -132,7 +132,7 @@ Future<?> f = executor.submit(() -> { throw new RuntimeException(); });
 f.get(); // только здесь узнаём об исключении
 ```
 
-→ Подробнее: [[Java Core/Concurrency/Overview#Отслеживание исключений в потоках]]
+→ Подробнее: [[Java Core/Concurrency/00_Overview#Отслеживание исключений в потоках]]
 
 ---
 
@@ -370,4 +370,4 @@ p99 ≈ 5000ms — показывает хвост; точный расчёт з
 
 ### 23. Симметричное / асимметричное шифрование
 
-→ [[Architecture/Distributed-Systems#Симметричное vs Асимметричное шифрование]]
+→ [[API/REST-and-Protocols#Шифрование и TLS]]

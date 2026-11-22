@@ -1,53 +1,91 @@
-# Карта заметок для собеседования
+# Оглавление Sobes
 
-Начни с [[Review/Quick-Questions|быстрых вопросов]] и [[Review/Senior-Checklist|чеклиста Senior]]. Разбор конкретной темы открывай по ссылкам ниже.
+При первом знакомстве с темой начни с основ и разбери пример. Затем закрой текст и ответь на вопрос в конце. При повторении открой **Two-Minute Drill** и проверь, можешь ли пояснить каждый пункт своими словами. В главах о платформе примеры ориентируются на JDK 21, а различия между версиями отмечены по месту.
 
-**Как пользоваться:** в каждой тематической заметке раздел «За две минуты» даёт ответ для повторения. Если формулировка непонятна, читай следующие разделы: там механизм, пример и ограничения. После чтения попробуй объяснить тему своими словами и проверить себя на примере. Числа производительности и настройки всегда сверяй с версией технологии и реальной нагрузкой.
+## 1. Java Core
 
-## Java Core — только язык и платформа Java
+### Язык
 
-- **Язык:** [[Java Core/Language/OOP|ООП и Object]], [[Java Core/Language/Generics|дженерики]], [[Java Core/Language/Exceptions|исключения]], [[Java Core/Language/Annotations|аннотации]].
-- **Коллекции:** [[Java Core/Collections/Overview|обзор]], [[Java Core/Collections/HashMap|HashMap подробно]].
-- **Concurrency:** [[Java Core/Concurrency/Overview|основы, JMM, Future]], [[Java Core/Concurrency/Synchronization-Interview|volatile и блокировки]], [[Java Core/Concurrency/Race-Conditions|гонки]], [[Java Core/Concurrency/CompletableFuture-Interview|практика CompletableFuture]].
-- **JVM:** [[Java Core/JVM/Overview|память, JIT, GC и запуск]], [[Java Core/JVM/G1-vs-ZGC|G1 и ZGC]].
+1. [ООП, Object и рефлексия](Java%20Core/Language/OOP.md)
+2. [Дженерики и PECS](Java%20Core/Language/Generics.md)
+3. [Исключения и try-with-resources](Java%20Core/Language/Exceptions.md)
+4. [Аннотации](Java%20Core/Language/Annotations.md)
+5. [String и неизменяемость](Java%20Core/Language/String-and-Immutable.md)
 
-## Kotlin
+### Коллекции
 
-[[Kotlin/Exceptions|Исключения]] · [[Kotlin/Dispatchers|Диспетчеры корутин]]
+1. [Интерфейсы коллекций и реализации](Java%20Core/Collections/Overview.md)
+2. [Как устроен HashMap](Java%20Core/Collections/HashMap.md)
+3. [Выбор коллекции и неизменяемость](Java%20Core/Collections/Choosing-and-Immutability.md)
 
-## Spring
+### JVM
 
-- **Core:** [[Spring/Core/Overview|IoC, DI, бины и прокси]], [[Spring/Core/Reflection|рефлексия в Spring]].
-- **Boot:** [[Spring/Boot/Overview|стартеры и автоконфигурация]], [[Spring/Boot/Internals|BeanDefinition и refresh()]].
-- **Data:** [[Spring/Data/Overview|JDBC, JPA, Hibernate]], [[Spring/Data/Hibernate-Batch-Insert|batch insert]].
-- **Cloud:** [[Spring/Cloud/Gateway|Gateway]].
+1. [Запуск JVM и JIT](Java%20Core/JVM/Overview.md)
+2. [Куча, стеки и GC roots](Java%20Core/JVM/Memory-and-GC-Roots.md)
+3. [Сборщики мусора, фазы и паузы](Java%20Core/JVM/Garbage-Collectors.md)
 
-## Данные и интеграция
+### Concurrency
 
-- **БД:** [[Databases/Overview|основы БД]], [[Databases/Row-Locks|строчные блокировки]], [[Databases/Optimistic-Locking|оптимистичная блокировка]], [[Databases/Deadlocks|взаимные блокировки]].
-- **Сообщения:** [[Messaging/Kafka|Kafka]].
-- **API:** [[API/REST-and-Protocols|REST, HTTP, SOAP и RPC]].
+1. [Обзор многопоточности и порядок изучения](Java%20Core/Concurrency/00_Overview.md)
+2. [Кэши L1–L3, когерентность и Java Memory Model](Java%20Core/Concurrency/JMM-Happens-Before.md)
+3. [Гонки и составные операции](Java%20Core/Concurrency/Race-Conditions.md)
+4. [Мониторы, volatile и ReentrantLock](Java%20Core/Concurrency/Synchronization-Interview.md)
+5. [Ожидание и прерывание: Lock, Condition, interrupt](Java%20Core/Concurrency/Lock-Condition-Interrupt.md)
+6. [CAS, атомики, ABA и ConcurrentHashMap](Java%20Core/Concurrency/CAS-Atomic-ConcurrentHashMap.md)
+7. [Executor, Future и CompletableFuture](Java%20Core/Concurrency/Executors-CompletableFuture.md)
 
-## Архитектура и эксплуатация
+## 2. Kotlin и модели исполнения
 
-[[Architecture/Distributed-Systems|Распределённые системы]] · [[Architecture/Design-Principles|SOLID и YAGNI]] · [[Architecture/Threading-Models|Потоки, event loop и virtual threads]] · [[Operations/Quartz-Scheduling|Quartz]] · [[Infrastructure/Kubernetes-Ingress|Kubernetes Ingress]] · [[Testing/Testing-Pyramid|Тестирование]] · [[Tooling/Dependency-Management|Сборка и зависимости]]
+1. [Исключения в Kotlin](Kotlin/Exceptions.md)
+2. [Корутины и Flow](Kotlin/Coroutines-and-Flow.md)
+3. [Диспетчеры корутин](Kotlin/Dispatchers.md)
+4. [Потоки Tomcat, event loop и virtual threads](Architecture/Threading-Models.md)
+5. [Reactive Streams и WebFlux](Reactive/Reactive-Streams-and-WebFlux.md)
 
-## Разборы по нашим собеседованиям
+## 3. Базы данных и доступ из Java
 
-- **Java:** [[Java Core/Concurrency/JMM-Happens-Before|JMM и HB]], [[Java Core/Concurrency/Lock-Condition-Interrupt|Lock/Condition/interrupt]], [[Java Core/Concurrency/CAS-Atomic-ConcurrentHashMap|CAS и ConcurrentHashMap]], [[Java Core/Concurrency/Executors-CompletableFuture|Executor и CompletableFuture]], [[Java Core/JVM/Memory-and-GC-Roots|GC roots]], [[Java Core/Collections/Choosing-and-Immutability|выбор и неизменяемость коллекций]], [[Java Core/Language/String-and-Immutable|String и immutable]].
-- **Spring и БД:** [[Spring/Core/Transactions-and-JPA|транзакции]], [[Spring/Core/Bean-Lifecycle-Interview|жизненный цикл бина]], [[Spring/Web/RestController-and-Errors|REST-контроллер]], [[Spring/Core/Async-Methods|@Async]], [[Databases/PostgreSQL-Interview-Gaps|PostgreSQL]], [[Databases/MongoDB-Basics|MongoDB]], [[Databases/PostgreSQL-SQL-Fundamentals|SQL и нормализация]], [[Databases/Redis-Basics|Redis]].
-- **Интеграции:** [[Messaging/Kafka-Cluster-and-Consumers|кластер Kafka и consumer]], [[Reactive/Reactive-Streams-and-WebFlux|WebFlux/Reactive Streams]], [[Kotlin/Coroutines-and-Flow|корутины и Flow]], [[API/gRPC-and-GraphQL|gRPC и GraphQL]].
-- **Архитектура и практика:** [[Architecture/Transactional-Outbox-and-Idempotency|Outbox/идемпотентность]], [[Architecture/Money-Transfer-and-Order-Design|переводы и заказы]], [[Testing/Payment-Code-Review-Checklist|code review]], [[Infrastructure/Kubernetes-Basics|Kubernetes]], [[Operations/Observability-and-Percentiles|наблюдаемость]].
+1. [Модели хранения, ACID, изоляция, индексы и репликация](Databases/Overview.md)
+2. [SQL, нормализация и JOIN](Databases/PostgreSQL-SQL-Fundamentals.md)
+3. [Блокировки строк](Databases/Row-Locks.md), [проверка версии](Databases/Optimistic-Locking.md) и [deadlock](Databases/Deadlocks.md)
+4. [Практика PostgreSQL: планы, пагинация и пул](Databases/PostgreSQL-Interview-Gaps.md)
+5. [MongoDB](Databases/MongoDB-Basics.md) и [Redis](Databases/Redis-Basics.md)
+6. [JDBC: драйвер, Statement, ResultSet, транзакция и batch](Spring/Data/JDBC.md)
+7. [JPA, Hibernate и Spring Data](Spring/Data/Overview.md) и [пакетная вставка Hibernate](Spring/Data/Hibernate-Batch-Insert.md)
+
+## 4. Spring
+
+1. [IoC, DI, скоупы, жизненный цикл бина и прокси](Spring/Core/Overview.md)
+2. [Рефлексия в Spring](Spring/Core/Reflection.md)
+3. [Spring Boot и свой стартер](Spring/Boot/Overview.md)
+4. [Регистрация BeanDefinition и refresh](Spring/Boot/Internals.md)
+5. [Транзакция от прокси до commit](Spring/Core/Transactions-and-JPA.md)
+6. [REST-контроллер и ошибки](Spring/Web/RestController-and-Errors.md)
+7. [Выполнение через @Async](Spring/Core/Async-Methods.md)
+8. [Spring Cloud Gateway](Spring/Cloud/Gateway.md)
+
+## 5. API и обмен сообщениями
+
+1. [HTTP, REST, SOAP и JSON-RPC](API/REST-and-Protocols.md)
+2. [gRPC и GraphQL](API/gRPC-and-GraphQL.md)
+3. [OSI, WebSocket, SSE, webhook и RSocket](API/Network-and-Streaming.md)
+4. [Kafka: порядок, доставка и поток событий](Messaging/Kafka.md)
+5. [Кластер Kafka, KRaft и consumer group](Messaging/Kafka-Cluster-and-Consumers.md)
+
+## 6. Проектирование, эксплуатация и тесты
+
+1. [SOLID и YAGNI](Architecture/Design-Principles.md)
+2. [CAP, Saga, Circuit Breaker и масштабирование](Architecture/Distributed-Systems.md)
+3. [Outbox и идемпотентность](Architecture/Transactional-Outbox-and-Idempotency.md)
+4. [Проектирование переводов и заказов](Architecture/Money-Transfer-and-Order-Design.md)
+5. [Kubernetes](Infrastructure/Kubernetes-Basics.md) и [Ingress](Infrastructure/Kubernetes-Ingress.md)
+6. [Метрики и перцентили](Operations/Observability-and-Percentiles.md) и [Quartz](Operations/Quartz-Scheduling.md)
+7. [Уровни тестирования](Testing/Testing-Pyramid.md) и [ревью кода платежей](Testing/Payment-Code-Review-Checklist.md)
+8. [Maven, Gradle и управление зависимостями](Tooling/Dependency-Management.md)
 
 ## Повторение
 
-[[Review/Conversation-Gap-Map|Карта пробелов из диалогов]] · [[Review/Quick-Questions|Быстрые вопросы]] · [[Review/Interview-Checklist|Вопросы с интервью]] · [[Review/Senior-Checklist|Пробелы Senior]]
+[Быстрые вопросы](Review/Quick-Questions.md) · [Недавние вопросы с интервью](Review/Interview-Checklist.md) · [Темы, которые стоит добрать](Review/Senior-Checklist.md) · [Карта разборов](Review/Conversation-Gap-Map.md) · [Куда перенесён материал Questions.docx](Review/Questions-Source-Map.md)
 
-## Куда добавлять новое
+## Как добавлять учебный материал
 
-1. Одна тема — одна заметка в подходящей папке. Перед созданием проверь ссылки выше и поиск Obsidian, чтобы дополнить существующую заметку.
-2. Java SE (язык, коллекции, JVM, concurrency) → `Java Core/`. Kotlin, Spring, БД, брокеры и инфраструктура → одноимённые разделы.
-3. Сначала краткий ответ для повторения, затем механизм, пример и блок «Где я ошибался / что проверить».
-4. Новую заметку добавь в этот индекс. В `Review/` храни вопросы и чеклисты со ссылками на канонические заметки.
-
-> Материалы перенесены из исходных заметок с сохранением разделов. При повторении сверяй спорные численные оценки и примеры с документацией выбранной версии Java, Spring и PostgreSQL.
+Сначала найди главу в оглавлении. Веди объяснение от определения и небольшого примера к механизму и ограничениям. Уточняй, где действует контракт языка или API, а где речь о реализации либо версии. **Two-Minute Drill** собирает основные выводы главы для повторения. Один вопрос на уже объяснённый сценарий помогает проверить, что механизм понятен. Новые вопросы для интервью ссылай на учебную главу.

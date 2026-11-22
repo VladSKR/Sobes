@@ -1,6 +1,6 @@
 # Kubernetes Ingress
 
-## За две минуты
+## Two-Minute Drill
 
 - Ingress задаёт правила внешнего HTTP/HTTPS маршрута к Service внутри кластера.
 - Нужен работающий Ingress Controller: один YAML-объект сам по себе трафик не направляет.

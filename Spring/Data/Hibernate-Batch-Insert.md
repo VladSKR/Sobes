@@ -1,6 +1,6 @@
 # Hibernate batch insert
 
-## За две минуты
+## Two-Minute Drill
 
 - `saveAll` сохраняет набор сущностей, но само по себе не обещает отправку SQL в JDBC batch.
 - `hibernate.jdbc.batch_size` разрешает Hibernate группировать однотипные SQL-команды; `IDENTITY` у вставляемой сущности обычно мешает JDBC insert batching.

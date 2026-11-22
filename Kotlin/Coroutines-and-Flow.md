@@ -1,6 +1,6 @@
 # Kotlin coroutines: Continuation, отмена, Flow
 
-## За две минуты
+## Two-Minute Drill
 
 - `suspend` приостанавливает корутину на подходящем API, не обязательно поток и не делает JDBC неблокирующим.
 - Компилятор сохраняет состояние выполнения в Continuation, а dispatcher выбирает поток продолжения.

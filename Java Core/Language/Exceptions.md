@@ -1,6 +1,6 @@
 # Exceptions (Исключения)
 
-## За две минуты
+## Two-Minute Drill
 
 - Checked исключение компилятор заставляет обработать или объявить; RuntimeException и Error — unchecked.
 - `finally` может скрыть первое исключение; try-with-resources сохраняет исключение закрытия как suppressed.
@@ -14,32 +14,20 @@
 
 ## Иерархия
 
-```
-Throwable
-├── Error (не обрабатываем)
-│   ├── OutOfMemoryError
-│   ├── StackOverflowError
-│   └── ...
-└── Exception
-    ├── RuntimeException (unchecked)
-    │   ├── NullPointerException
-    │   ├── IllegalArgumentException
-    │   ├── ArrayIndexOutOfBoundsException
-    │   └── ...
-    └── Checked Exceptions
-        ├── IOException
-        ├── SQLException
-        └── ...
-```
+Все объекты, которые можно выбросить через `throw`, наследуются от `Throwable`. Его две основные ветви — `Error` и `Exception`.
 
----
+| Ветвь | Проверка компилятора | Примеры |
+|---|---|---|
+| `Error` | Unchecked | `OutOfMemoryError`, `StackOverflowError`, `LinkageError` |
+| `RuntimeException` → `Exception` | Unchecked | `IllegalArgumentException` → `NumberFormatException`, `IndexOutOfBoundsException` → `ArrayIndexOutOfBoundsException`, `ArithmeticException` |
+| Остальные обычные подтипы `Exception` | Checked | `IOException` и его подтипы `FileNotFoundException`, `SocketException`, а также отдельная ветвь `SQLException` |
 
 ## Checked vs Unchecked
 
 | | Checked | Unchecked (RuntimeException) |
 |---|---|---|
 | Обязателен try-catch / throws | ✅ Да | ❌ Нет |
-| Когда | Внешние ресурсы (IO, DB) | Программные ошибки |
+| Типичные случаи | Ошибка чтения файла, прерывание ожидания | Неверный аргумент, нарушение состояния, исключение прикладного фреймворка |
 | Примеры | IOException, SQLException | NPE, IllegalArgument |
 
 
@@ -60,7 +48,7 @@ try {
 try {
     // код
 } catch (IOException | SQLException e) {
-    handle(e); // e — effectively final
+    handle(e); // e — неявно final
 }
 ```
 
@@ -91,7 +79,7 @@ try {
 
 ## Exception Propagation
 
-Unchecked исключения автоматически поднимаются по стеку вызовов:
+Если подходящего catch нет, исключение поднимается по стеку вызовов. Так работает и checked исключение, если промежуточные методы объявили его через `throws`.
 
 ```
 methodC() → throws NPE
@@ -118,18 +106,18 @@ void methodC() {
 
 ## Подавление исключений (Suppressed Exceptions)
 
-Возникает когда в `finally` или try-with-resources тоже бросается исключение:
+Если тело `try` и затем обычный `finally` выбросят исключения, вызывающий получит исключение из `finally`. Первоначальное не попадёт автоматически в `getSuppressed()`.
 
 ```java
 try {
     throw new RuntimeException("original");
 } finally {
-    throw new RuntimeException("finally"); // original ПОДАВЛЯЕТСЯ
+    throw new RuntimeException("finally"); // это исключение заменяет original
     // до вызывающего доходит только "finally"
 }
 ```
 
-### Try-with-resources решает проблему
+### Как try-with-resources сохраняет обе ошибки
 ```java
 try (Resource r = new Resource()) {
     throw new RuntimeException("original");

@@ -11,7 +11,7 @@
 | Требовал подробного разбора | GC roots, G1 marking и эвакуация; Stack vs Heap? | [[Java Core/JVM/Memory-and-GC-Roots]] |
 | Требовал подробного разбора | LinkedList вставки, defensive copy, immutable view? | [[Java Core/Collections/Choosing-and-Immutability]] |
 | Требовал подробного разбора | Путь proxy → TransactionInterceptor → manager → JDBC/JPA → commit? | [[Spring/Core/Transactions-and-JPA]] |
-| Требовал подробного разбора | BeanDefinition, BPP, prototype, `@Bean` vs `@Component`? | [[Spring/Core/Bean-Lifecycle-Interview]] |
+| Требовал подробного разбора | BeanDefinition, BPP, prototype, `@Bean` vs `@Component`? | [[Spring/Core/Overview#Жизненный цикл бина]] |
 | Требовал подробного разбора | MVCC, EXPLAIN, составной индекс, keyset, Hikari exhaustion? | [[Databases/PostgreSQL-Interview-Gaps]] |
 | Требовал подробного разбора | Kafka KRaft, ISR, offset commit, ordering, rebalance? | [[Messaging/Kafka-Cluster-and-Consumers]] |
 | Требовал подробного разбора | `request(n)` и перегрузка; event loop и блокирующий JDBC? | [[Reactive/Reactive-Streams-and-WebFlux]] |

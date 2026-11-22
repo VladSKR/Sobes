@@ -1,6 +1,6 @@
 # Spring Cloud Gateway
 
-## За две минуты
+## Two-Minute Drill
 
 - Gateway принимает внешний запрос, выбирает маршрут и может применить фильтры до/после вызова downstream.
 - Он не делает downstream отказоустойчивым без timeout, retry policy и ограничений нагрузки.

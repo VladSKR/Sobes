@@ -1,6 +1,6 @@
 # Generics (Дженерики)
 
-## За две минуты
+## Two-Minute Drill
 
 - Generics дают проверку типов на компиляции; erasure удаляет часть сведений о типе из исполняемого кода.
 - `? extends T` удобно читать как producer, `? super T` — записывать как consumer.
