@@ -64,7 +64,7 @@ suspend fun user(@PathVariable id: UUID): User = r2dbcRepository.findById(id)
 
 ## Two-Minute Drill
 
-- **Интервью-ловушка:** объясняй не только API, но и поток/очередь/связь happens-before, на которую опирается механизм.
+- **Интервью-ловушка:** асинхронность не означает несколько потоков, а suspend не делает JDBC non-blocking.
 
 - В классическом Spring MVC поток контейнера часто занят от начала обработки запроса до ответа, включая ожидание JDBC или HTTP.
 - В WebFlux event loop освобождает поток при неблокирующем I/O; блокирующий вызов в event loop мешает остальным запросам.
