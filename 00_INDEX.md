@@ -17,6 +17,7 @@
 1. [Интерфейсы коллекций и реализации](Java%20Core/Collections/Overview.md)
 2. [Как устроен HashMap](Java%20Core/Collections/HashMap.md)
 3. [Выбор коллекции и неизменяемость](Java%20Core/Collections/Choosing-and-Immutability.md)
+4. [Java Stream, Spliterator и parallelStream](Java%20Core/Collections/Streams-and-Parallelism.md)
 
 ### JVM
 
@@ -39,8 +40,9 @@
 1. [Исключения в Kotlin](Kotlin/Exceptions.md)
 2. [Корутины и Flow](Kotlin/Coroutines-and-Flow.md)
 3. [Диспетчеры корутин](Kotlin/Dispatchers.md)
-4. [Потоки Tomcat, event loop и virtual threads](Architecture/Threading-Models.md)
-5. [Reactive Streams и WebFlux](Reactive/Reactive-Streams-and-WebFlux.md)
+4. [Kotlin Collections и Sequence: eager vs lazy](Kotlin/Collections-and-Sequence.md)
+5. [Потоки Tomcat, event loop и virtual threads](Architecture/Threading-Models.md)
+6. [Reactive Streams и WebFlux](Reactive/Reactive-Streams-and-WebFlux.md)
 
 ## 3. Базы данных и доступ из Java
 
@@ -84,7 +86,7 @@
 
 ## Повторение
 
-[Быстрые вопросы](Review/Quick-Questions.md) · [Недавние вопросы с интервью](Review/Interview-Checklist.md) · [Темы, которые стоит добрать](Review/Senior-Checklist.md) · [Карта разборов](Review/Conversation-Gap-Map.md) · [Куда перенесён материал Questions.docx](Review/Questions-Source-Map.md)
+[Быстрые вопросы](Review/Quick-Questions.md) · [Недавние вопросы с интервью](Review/Interview-Checklist.md) · [Темы, которые стоит добрать](Review/Senior-Checklist.md) · [Карта разборов и оценки по собеседованию](Review/Conversation-Gap-Map.md) · [Куда перенесён материал Questions.docx](Review/Questions-Source-Map.md)
 
 ## Как добавлять учебный материал
 
