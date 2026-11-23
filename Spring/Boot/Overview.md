@@ -93,7 +93,7 @@ com.mybank.PaymentAutoConfiguration
 
 ## Two-Minute Drill
 
-- **Из интервью:** вспомни сквозной сценарий выше, его ограничения и вопрос для самопроверки.
+- **Из интервью:** PaymentConfig в пакете находит ComponentScan, стороннюю конфигурацию — Import или AutoConfiguration.imports.
 
 - Spring Boot добавляет автоконфигурацию, starters и удобный запуск приложения вокруг Spring Framework.
 - Стартер — набор зависимостей; автоконфигурация подключает бины по условиям и может уступить пользовательскому bean.
