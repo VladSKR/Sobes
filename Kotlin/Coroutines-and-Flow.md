@@ -26,13 +26,7 @@ suspend fun combine(): Result = coroutineScope {
 
 В `flow { emit(repository.load()) }` чтение повторится для каждого `collect`. `stateIn(scope, started, initial)` превращает вычисление в общее состояние с последним значением и управлением запуска через `SharingStarted`. Для одноразовых событий выбери семантику replay и переполнения. Например, `SharedFlow` с `replay=0` не выдаст новому подписчику старое событие.
 
-## Virtual threads и отличие
-
-Java virtual thread сохраняет собственную модель Thread и может быть смонтирован на carrier; при поддерживаемом блокирующем I/O JVM освобождает carrier и возобновляет virtual thread после готовности операции. Coroutine явно приостанавливается в suspend API через continuation. Ни один подход не отменяет лимит соединений БД/памяти/внешнего сервиса: при двух миллионах запросов понадобятся bounded queues, backpressure и admission control. Для JDK 21 есть нюансы pinning; оценивай конкретную версию и операции.
-
-[Модели исполнения серверов](../Architecture/Threading-Models.md) сопоставляют ожидание в MVC, WebFlux и virtual threads.
-
-## Suspend API в WebFlux: что именно освобождается
+## JDBC и R2DBC в suspend-функции
 
 ```kotlin
 suspend fun user(id: UUID): User = r2dbcRepository.findById(id)
@@ -50,13 +44,15 @@ suspend fun user(id: UUID): User =
 
 Так мы **изолируем блокирующий JDBC** от event loop, но занимаем worker `Dispatchers.IO` на время ожидания БД. `withContext(IO)` не превращает JDBC в non-blocking I/O и не обходит лимит пула соединений. При R2DBC отдельный ожидающий worker на каждую операцию не нужен. `delay(1000)` освобождает поток, `Thread.sleep(1000)` блокирует его; `sleep` не является busy-wait.
 
-**Проверь себя.** Почему 100 ожидающих R2DBC-ответов не требуют 100 потоков, а 100 одновременных JDBC-вызовов могут занять 100 workers?
+## Virtual threads и отличие
 
-R2DBC ждёт событие сокета без блокировки отдельного потока на каждый запрос; JDBC делает блокирующий вызов, и `Dispatchers.IO` лишь переносит блокировку. В обоих случаях реальная конкурентность ограничена драйвером, соединениями и downstream.
+Java virtual thread сохраняет собственную модель Thread и может быть смонтирован на carrier; при поддерживаемом блокирующем I/O JVM освобождает carrier и возобновляет virtual thread после готовности операции. Coroutine явно приостанавливается в suspend API через continuation. Ни один подход не отменяет лимит соединений БД/памяти/внешнего сервиса: при двух миллионах запросов понадобятся bounded queues, backpressure и admission control. Для JDK 21 есть нюансы pinning; оценивай конкретную версию и операции.
+
+[Модели исполнения серверов](../Architecture/Threading-Models.md) сопоставляют ожидание в MVC, WebFlux и virtual threads.
 
 ## Two-Minute Drill
 
-- **Интервью-ловушка:** задержка корутины не занимает поток, sleep/JDBC занимают; CoroutineContext не равен Continuation.
+- При suspend-ожидании R2DBC не нужен отдельный блокированный поток для каждого запроса; JDBC в Dispatchers.IO остаётся блокирующим.
 
 - `suspend` приостанавливает корутину на подходящем API, не обязательно поток и не делает JDBC неблокирующим.
 - Компилятор сохраняет состояние выполнения в Continuation, а dispatcher выбирает поток продолжения.
