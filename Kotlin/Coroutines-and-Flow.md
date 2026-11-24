@@ -26,6 +26,24 @@ suspend fun combine(): Result = coroutineScope {
 
 В `flow { emit(repository.load()) }` чтение повторится для каждого `collect`. `stateIn(scope, started, initial)` превращает вычисление в общее состояние с последним значением и управлением запуска через `SharingStarted`. Для одноразовых событий выбери семантику replay и переполнения. Например, `SharedFlow` с `replay=0` не выдаст новому подписчику старое событие.
 
+## JDBC и R2DBC в suspend-функции
+
+```kotlin
+suspend fun user(id: UUID): User = r2dbcRepository.findById(id)
+    ?: error("Not found")
+```
+
+При ожидании сетевого ответа драйвер R2DBC и клиентский адаптер могут **приостановить корутину**: состояние продолжения сохраняется, а event-loop поток может обрабатывать другие соединения. При готовности результата корутина возобновляется в соответствии с её контекстом и диспетчером; тот же Java-поток не гарантирован. Компилятор Kotlin/JVM использует continuation и машину состояний с точкой продолжения и необходимыми локальными переменными. `CoroutineContext` — **не** место хранения всей программы или «номер строки»: он объединяет элементы вроде `Job` и dispatcher.
+
+```kotlin
+suspend fun user(id: UUID): User =
+    withContext(Dispatchers.IO) {
+        jdbcRepository.load(id)
+    }
+```
+
+Так мы **изолируем блокирующий JDBC** от event loop, но занимаем worker `Dispatchers.IO` на время ожидания БД. `withContext(IO)` не превращает JDBC в non-blocking I/O и не обходит лимит пула соединений. При R2DBC отдельный ожидающий worker на каждую операцию не нужен. `delay(1000)` освобождает поток, `Thread.sleep(1000)` блокирует его; `sleep` не является busy-wait.
+
 ## Virtual threads и отличие
 
 Java virtual thread сохраняет собственную модель Thread и может быть смонтирован на carrier; при поддерживаемом блокирующем I/O JVM освобождает carrier и возобновляет virtual thread после готовности операции. Coroutine явно приостанавливается в suspend API через continuation. Ни один подход не отменяет лимит соединений БД/памяти/внешнего сервиса: при двух миллионах запросов понадобятся bounded queues, backpressure и admission control. Для JDK 21 есть нюансы pinning; оценивай конкретную версию и операции.
@@ -33,6 +51,8 @@ Java virtual thread сохраняет собственную модель Threa
 [Модели исполнения серверов](../Architecture/Threading-Models.md) сопоставляют ожидание в MVC, WebFlux и virtual threads.
 
 ## Two-Minute Drill
+
+- При suspend-ожидании R2DBC не нужен отдельный блокированный поток для каждого запроса; JDBC в Dispatchers.IO остаётся блокирующим.
 
 - `suspend` приостанавливает корутину на подходящем API, не обязательно поток и не делает JDBC неблокирующим.
 - Компилятор сохраняет состояние выполнения в Continuation, а dispatcher выбирает поток продолжения.
