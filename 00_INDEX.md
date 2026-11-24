@@ -86,7 +86,7 @@
 
 ## Повторение
 
-[Быстрые вопросы](Review/Quick-Questions.md) · [Недавние вопросы с интервью](Review/Interview-Checklist.md) · [Темы, которые стоит добрать](Review/Senior-Checklist.md) · [Карта разборов и оценки по собеседованию](Review/Conversation-Gap-Map.md) · [Куда перенесён материал Questions.docx](Review/Questions-Source-Map.md)
+[Быстрые вопросы](Review/Quick-Questions.md) · [Недавние вопросы с интервью](Review/Interview-Checklist.md) · [Темы, которые стоит добрать](Review/Senior-Checklist.md) · [Карта технических вопросов для повторения](Review/Conversation-Gap-Map.md) · [Куда перенесён материал Questions.docx](Review/Questions-Source-Map.md)
 
 ## Как добавлять учебный материал
 
