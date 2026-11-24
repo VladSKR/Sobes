@@ -12,15 +12,7 @@
 
 Для ответа на вопрос «если пришло 2 млн запросов»: `replicas` сами по себе не создают бесконечные БД-соединения и не защищают downstream; нужны capacity, HPA/автомасштабирование с метриками, bounded work и отказ при перегрузке. По тесту отличия Pod/Deployment и probes стоило повторить; остальная инфраструктура не была столь подробно проверена.
 
-## Один релиз backend-сервиса
-
-`Deployment` описывает желаемый шаблон Pod и количество реплик. Контроллер создаёт ReplicaSet, который поддерживает нужное число Pod. Планировщик выбирает узлы по требуемым ресурсам и ограничениям, kubelet запускает контейнеры. Когда Pod удаляется, ReplicaSet может создать другой с новым IP. `Service` выбирает Pod по меткам и даёт клиентам устойчивое имя.
-
-При обновлении Deployment новый ReplicaSet постепенно заменяет старый. `readinessProbe` определяет готовность принимать трафик, `livenessProbe` может привести к перезапуску контейнера, а `startupProbe` защищает медленный старт от преждевременной проверки liveness. `requests` участвуют в размещении Pod. При достижении CPU limit возможен throttling, при превышении memory limit — завершение процесса. HPA меняет желаемое количество реплик по метрикам, а на готовность новых Pod влияет всё тот же цикл запуска.
-
-[Deployment](https://kubernetes.io/docs/concepts/workloads/controllers/deployment/) · [Пробы](https://kubernetes.io/docs/concepts/configuration/liveness-readiness-startup-probes/) · [Путь внешнего запроса](Kubernetes-Ingress.md)
-
-## Разбор интервью: requests, limits, throttling, eviction
+## Ресурсы контейнера: requests, limits и поведение при нехватке памяти
 
 ```yaml
 resources:
@@ -44,15 +36,17 @@ Node имеет конечную память. Например, десять Po
 
 `memory: 1024Mi` ограничивает контейнер, а JVM `-Xmx` — только Java heap. Кроме heap процесс использует direct memory (например, Netty), metaspace, thread stacks, JIT code cache и native allocations. Поэтому `-Xmx=900m` при limit 1024Mi может **ухудшить**, а не исправить OOMKilled. [Диагностика JVM](../Java%20Core/JVM/Memory-and-GC-Roots.md).
 
-**Проверь себя.** Если Node почти свободна по фактическому CPU, но сумма requests уже близка к allocatable, назначит ли Scheduler Pod с большим CPU request? Что будет при достижении CPU limit во время работы?
+## Один релиз backend-сервиса
 
-Scheduler может отказать в размещении из-за недостатка заявленного CPU; уже работающий контейнер ограничивается CPU throttling, а не перезапускается.
+`Deployment` описывает желаемый шаблон Pod и количество реплик. Контроллер создаёт ReplicaSet, который поддерживает нужное число Pod. Планировщик выбирает узлы по требуемым ресурсам и ограничениям, kubelet запускает контейнеры. Когда Pod удаляется, ReplicaSet может создать другой с новым IP. `Service` выбирает Pod по меткам и даёт клиентам устойчивое имя.
 
-Источники: [Kubernetes resource management](https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/) · [Node pressure eviction](https://kubernetes.io/docs/concepts/scheduling-eviction/node-pressure-eviction/).
+При обновлении Deployment новый ReplicaSet постепенно заменяет старый. `readinessProbe` определяет готовность принимать трафик, `livenessProbe` может привести к перезапуску контейнера, а `startupProbe` защищает медленный старт от преждевременной проверки liveness. `requests` участвуют в размещении Pod. При достижении CPU limit возможен throttling, при превышении memory limit — завершение процесса. HPA меняет желаемое количество реплик по метрикам, а на готовность новых Pod влияет всё тот же цикл запуска.
+
+[Deployment](https://kubernetes.io/docs/concepts/workloads/controllers/deployment/) · [Пробы](https://kubernetes.io/docs/concepts/configuration/liveness-readiness-startup-probes/) · [Путь внешнего запроса](Kubernetes-Ingress.md)
 
 ## Two-Minute Drill
 
-- **Собеседование:** requests не резервируют RAM, CPU limits дают throttling, память может привести к OOMKilled или eviction.
+- Requests влияют на размещение Pod; CPU limits — на throttling, memory limits — на возможность OOMKilled; node-pressure eviction приводит к созданию нового Pod контроллером при наличии ресурсов.
 
 - Pod запускает контейнеры, Deployment поддерживает желаемое число pod, Service даёт стабильный адрес для них.
 - Readiness исключает pod из новых запросов; liveness инициирует перезапуск при сбое.
